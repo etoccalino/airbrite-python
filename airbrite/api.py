@@ -26,7 +26,7 @@ class APIAttribute (object):
 
     def __get__(self, instance, owner):
         if self.name not in instance._data:
-            return self.default
+            instance._data[self.name] = self.default
         return instance._data[self.name]
 
     def __set__(self, instance, value):

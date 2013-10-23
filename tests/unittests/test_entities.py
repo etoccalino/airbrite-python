@@ -299,6 +299,22 @@ class OrderTestCase(unittest.TestCase):
         self.assertEqual(len(airbrite.Order.client._put), 1)
         self.assertTrue(order.is_persisted)
 
+    def test_raw_add_to_list_items(self):
+        product_data = {'sku': 'some-product', 'quantity': 3}
+        order = airbrite.Order()
+        self.assertEqual(len(order.line_items), 0)
+        order.line_items.append(product_data)
+        self.assertEqual(len(order.line_items), 1)
+        self.assertEqual(order.line_items[0], product_data)
+
+    def test_add_item(self):
+        product = airbrite.Product(sku='some-sku')
+        order = airbrite.Order()
+        self.assertEqual(len(order.line_items), 0)
+        order.add_item(product, 2)
+        self.assertTrue(len(order.line_items), 1)
+        self.assertEqual(order.line_items[0]['sku'], 'some-sku')
+
 
 class ListOrderTestCase(unittest.TestCase):
 
