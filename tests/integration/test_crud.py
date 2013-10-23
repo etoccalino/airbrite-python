@@ -5,13 +5,7 @@ import airbrite.api
 import airbrite.client
 
 
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
-
 class ProductCRUDTestCase (unittest.TestCase):
-
-    logger = logging.getLogger('test.products')
 
     def test_backend_connection(self):
         """Tests the simplest call that should succeed"""
@@ -24,7 +18,7 @@ class ProductCRUDTestCase (unittest.TestCase):
         self.assertIsInstance(products, list)
         self.assertIsInstance(products_paging, dict)
 
-    def test_CRUD_single_product(self):
+    def test_create_and_retrieve_product(self):
         sku = str(uuid.uuid4())
         price = 150
         name = 'Test Product'
@@ -49,4 +43,88 @@ class ProductCRUDTestCase (unittest.TestCase):
             if product._id == same_product._id:
                 is_there = True
                 break
+        self.assertTrue(is_there)
+
+
+class OrderCRUDTestCase (unittest.TestCase):
+
+    DATA = {
+        'line_items': [{
+            'sku': 'white-tshirt-xl',
+            'quantity': 1
+        }],
+        'payment': [{
+            "gateway": "stripe",
+            "currency": "usd",
+            "charge_token": "ch_2djiAbQIPi1BEL",
+        }]
+    }
+
+    def test_get_orders(self):
+        orders, orders_paging = airbrite.api.Order.list()
+        self.assertIsInstance(orders, list)
+        self.assertIsInstance(orders_paging, dict)
+
+    def test_create_and_retrieve_order(self):
+        # Create the product
+        order = airbrite.api.Order(line_items=self.DATA['line_items'],
+                                   payment=self.DATA['payment'])
+        self.assertIsNone(order._id)
+        self.assertEqual(len(order.line_items), 1)
+        order.save()
+        self.assertIsNotNone(order._id)
+        self.assertEqual(len(order.line_items), 1)
+
+        # Fetch it back
+        same_order = airbrite.api.Order.fetch(_id=order._id)
+        self.assertEqual(len(same_order.line_items), 1)
+
+        # Make sure it's in the list
+        is_there, has_more = False, True
+        offset, limit = 0, 100
+        while not is_there and has_more:
+            # Get the next page
+            orders, paging = airbrite.api.Order.list(limit=limit,
+                                                     offset=offset)
+            # Update the params
+            has_more = paging.get('has_more', False)
+            if has_more:
+                offset, limit = paging['offset'], paging['limit']
+            # Search for the order in this page
+            for order in orders:
+                if order._id == same_order._id:
+                    is_there = True
+                    break
+        self.assertTrue(is_there)
+
+    def test_update_products_in_order(self):
+        # Create the product
+        order = airbrite.api.Order(line_items=self.DATA['line_items'],
+                                   payment=self.DATA['payment'])
+        self.assertIsNone(order._id)
+        self.assertEqual(len(order.line_items), 1)
+        order.save()
+        self.assertIsNotNone(order._id)
+        self.assertEqual(len(order.line_items), 1)
+
+        # Fetch it back
+        same_order = airbrite.api.Order.fetch(_id=order._id)
+        self.assertEqual(len(same_order.line_items), 1)
+
+        # Make sure it's in the list
+        is_there, has_more = False, True
+        offset, limit = 0, 100
+        while not is_there and has_more:
+            # Get the next page
+            orders, paging = airbrite.api.Order.list(limit=limit,
+                                                     offset=offset)
+            # Update the params
+            has_more = paging.get('has_more', False)
+            if has_more:
+                offset, limit = paging['offset'], paging['limit']
+            # Search for the order in this page
+            for order in orders:
+                if order._id == same_order._id:
+                    is_there = True
+                    break
         self.assertTrue(is_there)
