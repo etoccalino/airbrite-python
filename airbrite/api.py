@@ -26,7 +26,6 @@ class APIAttribute (object):
         self.name = attribute_api_name
 
     def __get__(self, instance, owner):
-        print owner, "(", self.default, ")", instance._data,
         if self.name not in instance._data:
             instance._data[self.name] = copy(self.default)
         return instance._data[self.name]
