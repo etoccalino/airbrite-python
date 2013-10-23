@@ -101,30 +101,25 @@ class OrderCRUDTestCase (unittest.TestCase):
         # Create the product
         order = airbrite.api.Order(line_items=self.DATA['line_items'],
                                    payment=self.DATA['payment'])
-        self.assertIsNone(order._id)
-        self.assertEqual(len(order.line_items), 1)
         order.save()
         self.assertIsNotNone(order._id)
-        self.assertEqual(len(order.line_items), 1)
 
         # Fetch it back
-        same_order = airbrite.api.Order.fetch(_id=order._id)
-        self.assertEqual(len(same_order.line_items), 1)
+        _id = order._id
+        del order
+        order = airbrite.api.Order.fetch(_id=_id)
+        self.assertEqual(len(order.line_items), 1)
 
-        # Make sure it's in the list
-        is_there, has_more = False, True
-        offset, limit = 0, 100
-        while not is_there and has_more:
-            # Get the next page
-            orders, paging = airbrite.api.Order.list(limit=limit,
-                                                     offset=offset)
-            # Update the params
-            has_more = paging.get('has_more', False)
-            if has_more:
-                offset, limit = paging['offset'], paging['limit']
-            # Search for the order in this page
-            for order in orders:
-                if order._id == same_order._id:
-                    is_there = True
-                    break
-        self.assertTrue(is_there)
+        # Update the order
+        p = order.line_items[0]
+        quantity = p['quantity']
+        new_quantity = quantity + 1
+        p['quantity'] = new_quantity
+        order.save()
+        self.assertEqual(order.line_items[0]['quantity'], new_quantity)
+
+        # Fetch it back, and ensure the order was updated
+        _id = order._id
+        del order
+        order = airbrite.api.Order.fetch(_id=_id)
+        self.assertEqual(order.line_items[0]['quantity'], new_quantity)
