@@ -136,22 +136,22 @@ class TestClient(object):
         if '_id' in data:
             for product in self.CANNED[self.hint]:
                 if product['_id']:
-                    return product
+                    return {'data': product}
             raise Exception('unknown _id')
         # If any product is acceptable, return any
-        return self.CANNED[self.hint][0]
+        return {'data': self.CANNED[self.hint][0]}
 
     def post(self, url, **data):
         # Prepare a version of the data that is acceptable to return
         posted_data = data.copy()
-        posted_data['_id'] = self.hint.__name__ + '_test_id'
+        posted_data['_id'] = self.hint.__name__.lower() + '_test_id'
         # Keep a copy for consultancy
         self._posted.append(posted_data)
-        return posted_data
+        return {'data': posted_data}
 
     def put(self, url, **data):
         # Prepare a version of the data that is acceptable to return
         put_data = data.copy()
         # Keep a copy for consultancy
         self._put.append(put_data)
-        return put_data
+        return {'data': put_data}

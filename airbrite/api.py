@@ -144,7 +144,7 @@ class Persistable (object):
     def create(cls, **kwargs):
         data = cls.client.post(cls.collection_url(), **kwargs)
         cls.logger.debug('create() got from backend: %s' % data)
-        return cls(**data)
+        return cls(**data['data'])
 
     def save(self):
         if not self.is_persisted:
