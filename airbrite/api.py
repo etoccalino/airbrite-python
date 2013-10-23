@@ -110,7 +110,7 @@ class Fetchable (object):
         if not self._id:
             raise Exception('refreshing an airbrite entity without ID')
         data = self.client.get(self.instance_url())
-        self.replace(data)
+        self.replace(data['data'])
 
 
 class Listable (object):
@@ -152,7 +152,7 @@ class Persistable (object):
         else:
             data = self.client.put(self.instance_url(), **self.to_dict())
         self.logger.debug('save() from backend: %s' % data)
-        self.replace(data)
+        self.replace(data['data'])
 
     @property
     def is_persisted(self):

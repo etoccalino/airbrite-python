@@ -33,11 +33,8 @@ product = airbrite.Product.create(sku="foo",
                                   name="Foo",
                                   description="An awesome watch",
                                   metadata={...})
-```
-
 # or
 
-```python
 product = airbrite.Product(sku="foo",
                           price=12345,
                           name="Foo",
@@ -50,11 +47,9 @@ product.save()
 
 ```python
 product = airbrite::Product.fetch(_id="foo")
-```
 
 # or
 
-```python
 product = airbrite::Product(_id="foo")
 product.refresh()
 ```
@@ -73,19 +68,15 @@ Accepts Filters.
 
 ```python
 products, paging = airbrite.Product.list()
-```
-
 ### Orders
 
 #### Create
 
 ```python
 order = airbrite.Order.create(...)
-```
 
 # or
 
-```python
 order = airbrite.Order(...)
 order.save()
 ```
@@ -94,11 +85,9 @@ order.save()
 
 ```python
 order = airbrite.Order.fetch(_id="foo")
-```
 
 # or
 
-```python
 order = airbrite.Order(_id="foo")
 order.refresh
 ```
@@ -120,7 +109,7 @@ orders, paging = airbrite.Order.list()
 ```
 
 
-################################ <<< >>> ######################################
+# <<< THIS FAR SO FAR  >>>
 
 
 ### Payments
