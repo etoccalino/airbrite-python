@@ -198,5 +198,11 @@ class Order (Entity, Fetchable, Listable, Persistable):
 
     class_url = 'orders'
 
+    def add_item(self, product, quantity=1):
+        self.line_items.append({
+            'sku': product.sku,
+            'quantity': quantity,
+        })
+
     def __repr__(self):
         return "<Order (%s)>" % str(getattr(self, '_id', '?'))

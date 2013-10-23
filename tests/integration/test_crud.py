@@ -98,7 +98,7 @@ class OrderCRUDTestCase (unittest.TestCase):
         self.assertTrue(is_there)
 
     def test_update_products_in_order(self):
-        # Create the product
+        # Create the order
         order = airbrite.api.Order(line_items=self.DATA['line_items'],
                                    payment=self.DATA['payment'])
         order.save()
