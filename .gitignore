@@ -1,0 +1,8 @@
+*~
+*pyc
+dist/
+build/
+env/
+dev.db
+local_settings.py
+airbrite.egg-info/
