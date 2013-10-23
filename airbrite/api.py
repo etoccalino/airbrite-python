@@ -1,6 +1,7 @@
 # TODO: define a manager to handle paging for the resources.
 
 from datetime import datetime
+from copy import copy
 import logging
 import calendar
 
@@ -25,8 +26,9 @@ class APIAttribute (object):
         self.name = attribute_api_name
 
     def __get__(self, instance, owner):
+        print owner, "(", self.default, ")", instance._data,
         if self.name not in instance._data:
-            instance._data[self.name] = self.default
+            instance._data[self.name] = copy(self.default)
         return instance._data[self.name]
 
     def __set__(self, instance, value):
