@@ -91,7 +91,6 @@ class ProductTestCase(unittest.TestCase):
         self.assertEqual(product.price, data['price'])
         product.save()
         self.assertIsNotNone(product._id)
-        self.assertNotEqual(product._id, '')
         self.assertEqual(product.sku, data['sku'])
         self.assertEqual(product.price, data['price'])
 
@@ -153,14 +152,14 @@ class ListProductTestCase(unittest.TestCase):
         airbrite.Product.client = self._client
 
     def test_list_filters(self):
-        _, _ = airbrite.Product.list(limit=1, skip=1, sort='field')
+        _, _ = airbrite.Product.list(limit=1, offset=1, sort='field')
         self.mockClient.get.assert_called_once_with(
             airbrite.Product.collection_url(),
-            limit=1, skip=1, sort='field')
+            limit=1, offset=1, sort='field')
 
     def test_list_bad_filters(self):
         self.assertRaises(Exception, airbrite.Product.list,
-                          limit=1, skip='two', sort='field')
+                          limit=1, offset='two', sort='field')
 
     def test_full_list(self):
         c = airbrite.Product.client
@@ -266,7 +265,6 @@ class OrderTestCase(unittest.TestCase):
         self.assertEqual(order.currency, data['currency'])
         order.save()
         self.assertIsNotNone(order._id)
-        self.assertNotEqual(order._id, '')
         self.assertEqual(order.customer_id, data['customer_id'])
         self.assertEqual(order.currency, data['currency'])
 
@@ -322,14 +320,14 @@ class ListOrderTestCase(unittest.TestCase):
         airbrite.Order.client = self._client
 
     def test_list_filters(self):
-        _, _ = airbrite.Order.list(limit=1, skip=1, sort='field')
+        _, _ = airbrite.Order.list(limit=1, offset=1, sort='field')
         self.mockClient.get.assert_called_once_with(
             airbrite.Order.collection_url(),
-            limit=1, skip=1, sort='field')
+            limit=1, offset=1, sort='field')
 
     def test_list_bad_filters(self):
         self.assertRaises(Exception, airbrite.Order.list,
-                          limit=1, skip='two', sort='field')
+                          limit=1, offset='two', sort='field')
 
     def test_full_list(self):
         c = airbrite.Order.client

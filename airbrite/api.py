@@ -116,7 +116,7 @@ class Fetchable (object):
 class Listable (object):
     """Mixin to get `list`"""
 
-    FILTERS = [('limit', int), ('skip', int), ('sort', str),
+    FILTERS = [('limit', int), ('offset', int), ('sort', str),
                ('order', str), ('since', int), ('until', int)]
 
     @classmethod

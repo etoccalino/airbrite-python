@@ -12,6 +12,22 @@ Or install it yourself as:
 
     $ pip install airbrite
 
+You can use a virtual environment to install it:
+
+    $ virtualenv env
+    $ source env/bin/activate
+    $ pip install -r REQUIREMENTS
+
+## Tests
+
+To run the unit tests use:
+
+    $ python setup.py test
+
+To run the integration tests (which use the network, and take longer than units):
+
+    $ nosetests tests/integration
+
 ## Usage
 
 ### Getting Started
