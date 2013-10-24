@@ -148,9 +148,10 @@ class Persistable (object):
         cls.logger.debug('create() got from backend: %s' % data)
         return cls(**data['data'])
 
-    def save(self):
+    def save(self, **kwargs):
         if not self.is_persisted:
-            data = self.client.post(self.collection_url(), **self.to_dict())
+            data = self.client.post(self.collection_url(**kwargs),
+                                    **self.to_dict())
         else:
             data = self.client.put(self.instance_url(), **self.to_dict())
         self.logger.debug('save() from backend: %s' % data)
@@ -210,7 +211,7 @@ class Order (Fetchable, Listable, Persistable, Entity):
         return "<Order (%s)>" % str(getattr(self, '_id', '?'))
 
 
-class Shipment (Persistable, Fetchable, Entity):
+class Shipment (Fetchable, Listable, Persistable, Entity):
 
     order_id = APIAttribute('order_id')
     courier = APIAttribute('courier', default='')
@@ -241,28 +242,13 @@ class Shipment (Persistable, Fetchable, Entity):
             raise Exception('refreshing a shipment requires a valid order_id')
         super(Shipment, self).refresh()
 
-# class Persistable (object):
-#     """Mixin to get `create`, `save` and `is_persisted` functionality"""
-
-    @classmethod
-    def create(cls, **kwargs):
-        order_id = kwargs.get('order_id')
-        data = cls.client.post(cls.collection_url(order_id=order_id), **kwargs)
-        cls.logger.debug('create() got from backend: %s' % data)
-        return cls(**data['data'])
-
     def save(self):
-        if not self.is_persisted:
-            if not self.order_id:
-                raise Exception('saving a shipment requires a valid order_id')
-            data = self.client.post(
-                self.collection_url(order_id=self.order_id),
-                **self.to_dict())
-        else:
-            data = self.client.put(self.instance_url(), **self.to_dict())
-        self.logger.debug('save() from backend: %s' % data)
-        self.replace(data['data'])
+        if not self.order_id:
+            raise Exception('saving a shipment requires a valid order_id')
+        super(Shipment, self).save(order_id=self.order_id)
 
     @property
     def is_persisted(self):
-        return self._id and self.order_id
+        if self.order_id:
+            return super(Shipment, self).is_persisted
+        return False
