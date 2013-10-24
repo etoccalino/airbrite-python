@@ -108,8 +108,8 @@ class Fetchable (object):
         return instance
 
     def refresh(self):
-        if not self._id:
-            raise Exception('refreshing an airbrite entity without ID')
+        if not self.is_persisted:
+            raise Exception('refreshing non-saved airbrite entity')
         data = self.client.get(self.instance_url())
         self.replace(data['data'])
 
@@ -234,13 +234,6 @@ class Shipment (Fetchable, Listable, Persistable, Entity):
             raise Exception('must have order_id to have a URL')
         return "%s/%s" % (self.collection_url(order_id=self.order_id),
                           self._id)
-
-    def refresh(self):
-        if not self._id:
-            raise Exception('refreshing an airbrite entity without ID')
-        if not self.order_id:
-            raise Exception('refreshing a shipment requires a valid order_id')
-        super(Shipment, self).refresh()
 
     def save(self):
         if not self.order_id:
