@@ -163,7 +163,7 @@ class Persistable (object):
 
 ###############################################################################
 
-class Product (Entity, Fetchable, Listable, Persistable):
+class Product (Fetchable, Listable, Persistable, Entity):
 
     class_url = 'products'
 
@@ -175,7 +175,7 @@ class Product (Entity, Fetchable, Listable, Persistable):
         return "<Product (%s)>" % str(getattr(self, '_id', '?'))
 
 
-class Order (Entity, Fetchable, Listable, Persistable):
+class Order (Fetchable, Listable, Persistable, Entity):
 
     customer_id = APIAttribute('customer_id')
     currency = APIAttribute('currency')  # 3-letter ISO currency code
@@ -210,7 +210,7 @@ class Order (Entity, Fetchable, Listable, Persistable):
         return "<Order (%s)>" % str(getattr(self, '_id', '?'))
 
 
-class Shipment (Entity):
+class Shipment (Fetchable, Entity):
 
     order_id = APIAttribute('order_id')
     courier = APIAttribute('courier', default='')
@@ -234,36 +234,18 @@ class Shipment (Entity):
         return "%s/%s" % (self.collection_url(order_id=self.order_id),
                           self._id)
 
-    ###########################################################################
-
-    @classmethod
-    def fetch(cls, **kwargs):
-        instance = cls(**kwargs)
-        instance.refresh()
-        return instance
-
     def refresh(self):
         if not self._id:
             raise Exception('refreshing an airbrite entity without ID')
         if not self.order_id:
             raise Exception('refreshing a shipment requires a valid order_id')
-        data = self.client.get(self.instance_url())
-        self.replace(data['data'])
+        super(Shipment, self).refresh()
 
 # class Listable (object):
 #     """Mixin to get `list`"""
 
     FILTERS = [('limit', int), ('offset', int), ('sort', str),
                ('order', str), ('since', int), ('until', int)]
-
-    @classmethod
-    def _filters(cls, **kwargs):
-        try:
-            filters = dict(((_f, _t(kwargs[_f]))
-                            for (_f, _t) in cls.FILTERS if _f in kwargs))
-        except ValueError:
-            raise Exception('bad value for filters')
-        return filters
 
     @classmethod
     def list(cls, **kwargs):
