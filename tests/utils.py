@@ -1,7 +1,7 @@
 """
 A client implements get, put, post and
 """
-from airbrite import Product, Order
+from airbrite import Product, Order, Shipment
 
 
 class TestClient(object):
@@ -94,8 +94,28 @@ class TestClient(object):
             "updated": 1380735881,
             "updated_date": "2013-10-02T17:44:41.663Z",
             "user_id": "5237a347429acf0400000013"
+        }],
+        Shipment: [{
+            "_id": "52696f72291468040000003e",
+            "created": 1382641522,
+            "created_date": "2013-10-24T19:05:22.134Z",
+            "metadata": {},
+            "order_id": "524c5b896b19e60600000122",
+            "shipping_address": None,
+            "updated": 1382641522,
+            "updated_date": "2013-10-24T19:05:22.134Z",
+            "user_id": "5237a347429acf0400000013"
+        }, {
+            "_id": "52696fa4ba015806000000bc",
+            "created": 1382641572,
+            "created_date": "2013-10-24T19:06:12.571Z",
+            "metadata": {},
+            "order_id": "524c5b896b19e60600000122",
+            "shipping_address": None,
+            "updated": 1382641572,
+            "updated_date": "2013-10-24T19:06:12.571Z",
+            "user_id": "5237a347429acf0400000013"
         }]
-
     }
 
     def __init__(self, hint):
@@ -121,7 +141,7 @@ class TestClient(object):
 
     def get(self, url, **data):
         # Linsting the products
-        if url == self.hint.collection_url():
+        if url == self.hint.collection_url(**data):
             return {
                 'data': self.CANNED[self.hint],
                 'paging': {

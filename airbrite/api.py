@@ -82,7 +82,7 @@ class Entity (object):
         return "%s/%s" % (self.collection_url(), self._id)
 
     @classmethod
-    def collection_url(cls):
+    def collection_url(cls, **kwargs):
         return "%s/%s" % (END_POINT, cls.class_url)
 
     def __init__(self, **kwargs):
@@ -131,7 +131,8 @@ class Listable (object):
 
     @classmethod
     def list(cls, **kwargs):
-        req = cls.client.get(cls.collection_url(), **cls._filters(**kwargs))
+        req = cls.client.get(cls.collection_url(**kwargs),
+                             **cls._filters(**kwargs))
         cls.logger.debug('list() got from backend: %s' % req['data'])
         results = [cls(**data) for data in req['data']]
         paging = req['paging']
@@ -143,7 +144,7 @@ class Persistable (object):
 
     @classmethod
     def create(cls, **kwargs):
-        data = cls.client.post(cls.collection_url(), **kwargs)
+        data = cls.client.post(cls.collection_url(**kwargs), **kwargs)
         cls.logger.debug('create() got from backend: %s' % data)
         return cls(**data['data'])
 
@@ -207,3 +208,93 @@ class Order (Entity, Fetchable, Listable, Persistable):
 
     def __repr__(self):
         return "<Order (%s)>" % str(getattr(self, '_id', '?'))
+
+
+class Shipment (Entity):
+
+    order_id = APIAttribute('order_id')
+    courier = APIAttribute('courier', default='')
+    shipping_address = APIAttribute('shipping_address', default={})
+    tracking = APIAttribute('tracking')
+    method = APIAttribute('method')
+    status = APIAttribute('status')
+
+    class_url = 'orders/%(order_id)s/shipments'
+
+    @classmethod
+    def collection_url(cls, order_id=order_id, **kwargs):
+        relative_url = cls.class_url % {'order_id': order_id}
+        return "%s/%s" % (END_POINT, relative_url)
+
+    def instance_url(self):
+        if not self._id:
+            raise Exception('must have _id to have a URL')
+        if not self.order_id:
+            raise Exception('must have order_id to have a URL')
+        return "%s/%s" % (self.collection_url(order_id=self.order_id),
+                          self._id)
+
+    ###########################################################################
+
+    @classmethod
+    def fetch(cls, **kwargs):
+        instance = cls(**kwargs)
+        instance.refresh()
+        return instance
+
+    def refresh(self):
+        if not self._id:
+            raise Exception('refreshing an airbrite entity without ID')
+        if not self.order_id:
+            raise Exception('refreshing a shipment requires a valid order_id')
+        data = self.client.get(self.instance_url())
+        self.replace(data['data'])
+
+# class Listable (object):
+#     """Mixin to get `list`"""
+
+    FILTERS = [('limit', int), ('offset', int), ('sort', str),
+               ('order', str), ('since', int), ('until', int)]
+
+    @classmethod
+    def _filters(cls, **kwargs):
+        try:
+            filters = dict(((_f, _t(kwargs[_f]))
+                            for (_f, _t) in cls.FILTERS if _f in kwargs))
+        except ValueError:
+            raise Exception('bad value for filters')
+        return filters
+
+    @classmethod
+    def list(cls, order_id, **kwargs):
+        req = cls.client.get(cls.collection_url(order_id=order_id),
+                             **cls._filters(**kwargs))
+        cls.logger.debug('list() got from backend: %s' % req['data'])
+        results = [cls(**data) for data in req['data']]
+        paging = req['paging']
+        return results, paging
+
+# class Persistable (object):
+#     """Mixin to get `create`, `save` and `is_persisted` functionality"""
+
+    @classmethod
+    def create(cls, order_id, **kwargs):
+        data = cls.client.post(cls.collection_url(order_id=order_id), **kwargs)
+        cls.logger.debug('create() got from backend: %s' % data)
+        return cls(**data['data'])
+
+    def save(self):
+        if not self.is_persisted:
+            if not self.order_id:
+                raise Exception('saving a shipment requires a valid order_id')
+            data = self.client.post(
+                self.collection_url(order_id=self.order_id),
+                **self.to_dict())
+        else:
+            data = self.client.put(self.instance_url(), **self.to_dict())
+        self.logger.debug('save() from backend: %s' % data)
+        self.replace(data['data'])
+
+    @property
+    def is_persisted(self):
+        return self._id and self.order_id
