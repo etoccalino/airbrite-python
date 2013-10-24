@@ -266,7 +266,8 @@ class Shipment (Entity):
         return filters
 
     @classmethod
-    def list(cls, order_id, **kwargs):
+    def list(cls, **kwargs):
+        order_id = kwargs.get('order_id')
         req = cls.client.get(cls.collection_url(order_id=order_id),
                              **cls._filters(**kwargs))
         cls.logger.debug('list() got from backend: %s' % req['data'])
@@ -278,7 +279,8 @@ class Shipment (Entity):
 #     """Mixin to get `create`, `save` and `is_persisted` functionality"""
 
     @classmethod
-    def create(cls, order_id, **kwargs):
+    def create(cls, **kwargs):
+        order_id = kwargs.get('order_id')
         data = cls.client.post(cls.collection_url(order_id=order_id), **kwargs)
         cls.logger.debug('create() got from backend: %s' % data)
         return cls(**data['data'])

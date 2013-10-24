@@ -1,6 +1,7 @@
 """
 A client implements get, put, post and
 """
+import copy
 from airbrite import Product, Order, Shipment
 
 
@@ -159,11 +160,12 @@ class TestClient(object):
                     return {'data': product}
             raise Exception('unknown _id')
         # If any product is acceptable, return any
-        return {'data': self.CANNED[self.hint][0]}
+        result_data = self.CANNED[self.hint][0]
+        return {'data': copy.deepcopy(result_data)}
 
     def post(self, url, **data):
         # Prepare a version of the data that is acceptable to return
-        posted_data = data.copy()
+        posted_data = copy.deepcopy(data)
         posted_data['_id'] = self.hint.__name__.lower() + '_test_id'
         # Keep a copy for consultancy
         self._posted.append(posted_data)
@@ -171,7 +173,7 @@ class TestClient(object):
 
     def put(self, url, **data):
         # Prepare a version of the data that is acceptable to return
-        put_data = data.copy()
+        put_data = copy.deepcopy(data)
         # Keep a copy for consultancy
         self._put.append(put_data)
         return {'data': put_data}
