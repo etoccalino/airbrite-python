@@ -210,7 +210,7 @@ class Order (Fetchable, Listable, Persistable, Entity):
         return "<Order (%s)>" % str(getattr(self, '_id', '?'))
 
 
-class Shipment (Fetchable, Entity):
+class Shipment (Persistable, Fetchable, Entity):
 
     order_id = APIAttribute('order_id')
     courier = APIAttribute('courier', default='')
@@ -240,22 +240,6 @@ class Shipment (Fetchable, Entity):
         if not self.order_id:
             raise Exception('refreshing a shipment requires a valid order_id')
         super(Shipment, self).refresh()
-
-# class Listable (object):
-#     """Mixin to get `list`"""
-
-    FILTERS = [('limit', int), ('offset', int), ('sort', str),
-               ('order', str), ('since', int), ('until', int)]
-
-    @classmethod
-    def list(cls, **kwargs):
-        order_id = kwargs.get('order_id')
-        req = cls.client.get(cls.collection_url(order_id=order_id),
-                             **cls._filters(**kwargs))
-        cls.logger.debug('list() got from backend: %s' % req['data'])
-        results = [cls(**data) for data in req['data']]
-        paging = req['paging']
-        return results, paging
 
 # class Persistable (object):
 #     """Mixin to get `create`, `save` and `is_persisted` functionality"""
