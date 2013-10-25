@@ -316,14 +316,18 @@ class OrderTestCase(unittest.TestCase):
 
     def test_add_shipment_on_creation(self):
         shipment = airbrite.Shipment(status='in_progress')
-        order = airbrite.Order(shipments=[shipment])
+        order = airbrite.Order(shipments=[shipment.to_dict()])
         self.assertEqual(len(order.shipments), 1)
 
     def test_add_shipment(self):
         shipment = airbrite.Shipment(status='in_progress')
         order = airbrite.Order()
+
+        # Ensure it must be passed dicts
+        self.assertRaises(TypeError, order.add_shipment, shipment)
+
         self.assertEqual(len(order.shipments), 0)
-        order.add_shipment(shipment)
+        order.add_shipment(shipment.to_dict())
         self.assertEqual(len(order.shipments), 1)
         self.assertEqual(order.shipments[0]['status'], 'in_progress')
 

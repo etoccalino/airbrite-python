@@ -260,21 +260,27 @@ class Order (Fetchable, Listable, Persistable, Entity):
             'quantity': quantity,
         })
 
-    def add_shipment(self, shipment):
-        data = shipment
-        if type(shipment) is not dict:
-            data = shipment.to_dict()
-        self.shipments.append(data)
+    def add_shipment(self, shipment_data):
+        if type(shipment_data) is not dict:
+            raise TypeError('use to_dict() to pass a dict of values')
+        self.shipments.append(shipment_data)
 
-    def remove_shipment(self, shipment):
-        if not shipment._id:
+    def remove_shipment(self, shipment_data):
+        if type(shipment_data) is not dict:
+            raise TypeError('use to_dict() to pass a dict of values')
+
+        # Must have an _id to remove
+        if '_id' not in shipment_data or not shipment_data['_id']:
             raise Exception('shipment does not have an ID')
+
         if not 'shipments' in self._data:
             self._data['shipments'] = []
+
+        # Remove by value of _id
         shipments = self._data['shipments']
-        for shipment_data in shipments:
-            if shipment_data['_id'] == shipment._id:
-                shipments.delete(shipment_data)
+        for data in shipments:
+            if data['_id'] == shipment_data['_id']:
+                shipments.delete(data)
 
     def __repr__(self):
         return "<Order (%s)>" % str(getattr(self, '_id', '?'))

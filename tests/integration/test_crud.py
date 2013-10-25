@@ -41,13 +41,23 @@ class ProductCRUDTestCase (unittest.TestCase):
         self.assertEqual(same_product.name, name)
 
         # Make sure it's in the list
-        products, paging = airbrite.Product.list()
-        self.assertTrue(not paging.get('has_more'))
-        is_there = False
-        for product in products:
-            if product._id == same_product._id:
-                is_there = True
-                break
+
+        # Make sure it's in the list
+        is_there, has_more = False, True
+        offset, limit = 0, 100
+        while not is_there and has_more:
+            # Get the next page
+            products, paging = airbrite.Product.list(limit=limit,
+                                                     offset=offset)
+            # Update the params
+            has_more = paging.get('has_more', False)
+            if has_more:
+                offset, limit = paging['offset'], paging['limit']
+            # Search for the order in this page
+            for product in products:
+                if product._id == same_product._id:
+                    is_there = True
+                    break
         self.assertTrue(is_there)
 
 
