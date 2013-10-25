@@ -84,7 +84,8 @@ class CartTestCase (unittest.TestCase):
         self.assertEqual(len(order.line_items), 2)
 
         # Add shipment data to the order
-        shipment
+        shipment = airbrite.Shipment(metadata={'note': 'stubbed shipment'})
+        order.add_shipment(shipment)
 
         # Add customer data to the order
 
@@ -98,7 +99,10 @@ class CartTestCase (unittest.TestCase):
         _id = order._id
         del order
         order = airbrite.Order.fetch(_id=_id)
+
         self.assertEqual(len(order.line_items), 2)
         SKUs = [p['sku'] for p in order.line_items]
         self.assertTrue(product1.sku in SKUs)
         self.assertTrue(product2.sku in SKUs)
+
+        self.assertEqual(len(order.shipments), 1)
