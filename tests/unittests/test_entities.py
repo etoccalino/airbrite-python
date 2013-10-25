@@ -429,6 +429,12 @@ class ShipmentTestCase(unittest.TestCase):
         del created['_id']
         self.assertEqual(created, data)
 
+    def test_create_without_order(self):
+        data = {
+            'shipping_address': self.SHIP1.get('shipping_address'),
+        }
+        self.assertRaises(Exception, airbrite.Shipment.create, **data)
+
     def test_save(self):
         data = {
             'order_id': self.SHIP1.get('order_id'),
@@ -442,6 +448,12 @@ class ShipmentTestCase(unittest.TestCase):
         self.assertIsNotNone(shipment._id)
         self.assertEqual(shipment.order_id, data['order_id'])
         self.assertEqual(shipment.shipping_address, data['shipping_address'])
+
+    def test_save_without_order(self):
+        data = {
+            'shipping_address': self.SHIP1.get('shipping_address'),
+        }
+        self.assertRaises(Exception, airbrite.Shipment.save, **data)
 
     def test_update(self):
         DESCRIPTION = 'a new shipment'

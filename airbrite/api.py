@@ -235,6 +235,13 @@ class Shipment (Fetchable, Listable, Persistable, Entity):
         return "%s/%s" % (self.collection_url(order_id=self.order_id),
                           self._id)
 
+    @classmethod
+    def create(cls, **kwargs):
+        order_id = kwargs.get('order_id', None)
+        if not order_id:
+            raise Exception('need an order_id to create a shipment')
+        return super(Shipment, cls).create(**kwargs)
+
     def save(self):
         if not self.order_id:
             raise Exception('saving a shipment requires a valid order_id')
