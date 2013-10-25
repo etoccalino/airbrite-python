@@ -176,53 +176,6 @@ class Product (Fetchable, Listable, Persistable, Entity):
         return "<Product (%s)>" % str(getattr(self, '_id', '?'))
 
 
-class Order (Fetchable, Listable, Persistable, Entity):
-
-    customer_id = APIAttribute('customer_id')
-    currency = APIAttribute('currency')  # 3-letter ISO currency code
-    order_number = APIAttribute('order_number', default=-1)
-    status = APIAttribute('status')
-
-    # Contains sku, quantity
-    line_items = APIAttribute('line_items', default=[])
-
-    # Contains name, line1, line2, city, state, zip, country, phone
-    # Country must by a 2-letter ISO country code
-    shipping_address = APIAttribute('shipping_address', default={})
-
-    # Contains cost (integer)
-    discount = APIAttribute('discount', default={})
-
-    # Contains cost (integer)
-    shipping = APIAttribute('shipping', default={})
-
-    # Contains cost (integer)
-    tax = APIAttribute('tax', default={})
-
-    # Optional shipments connection (object)
-    shipments = APIAttribute('shipments', default=[])
-
-    class_url = 'orders'
-
-    def __init__(self, **kwargs):
-        shipments = kwargs.pop('shipments', [])
-        super(Order, self).__init__(**kwargs)
-        for shipment in shipments:
-            self.add_shipment(shipment)
-
-    def add_item(self, product, quantity=1):
-        self.line_items.append({
-            'sku': product.sku,
-            'quantity': quantity,
-        })
-
-    def add_shipment(self, shipment):
-        self.shipments.append(shipment.to_dict())
-
-    def __repr__(self):
-        return "<Order (%s)>" % str(getattr(self, '_id', '?'))
-
-
 class Shipment (Fetchable, Listable, Persistable, Entity):
 
     order_id = APIAttribute('order_id')
@@ -264,3 +217,64 @@ class Shipment (Fetchable, Listable, Persistable, Entity):
         if self.order_id:
             return super(Shipment, self).is_persisted
         return False
+
+
+class Order (Fetchable, Listable, Persistable, Entity):
+
+    customer_id = APIAttribute('customer_id')
+    currency = APIAttribute('currency')  # 3-letter ISO currency code
+    order_number = APIAttribute('order_number', default=-1)
+    status = APIAttribute('status')
+
+    # Contains sku, quantity
+    line_items = APIAttribute('line_items', default=[])
+
+    # Contains name, line1, line2, city, state, zip, country, phone
+    # Country must by a 2-letter ISO country code
+    shipping_address = APIAttribute('shipping_address', default={})
+
+    # Contains cost (integer)
+    discount = APIAttribute('discount', default={})
+
+    # Contains cost (integer)
+    shipping = APIAttribute('shipping', default={})
+
+    # Contains cost (integer)
+    tax = APIAttribute('tax', default={})
+
+    # Optional shipments connection (object)
+    # TODO: make this attribute a nested entity collection
+    shipments = APIAttribute('shipments', default=[])
+
+    class_url = 'orders'
+
+    def __init__(self, **kwargs):
+        shipments = kwargs.pop('shipments', [])
+        super(Order, self).__init__(**kwargs)
+        for shipment in shipments:
+            self.add_shipment(shipment)
+
+    def add_item(self, product, quantity=1):
+        self.line_items.append({
+            'sku': product.sku,
+            'quantity': quantity,
+        })
+
+    def add_shipment(self, shipment):
+        data = shipment
+        if type(shipment) is not dict:
+            data = shipment.to_dict()
+        self.shipments.append(data)
+
+    def remove_shipment(self, shipment):
+        if not shipment._id:
+            raise Exception('shipment does not have an ID')
+        if not 'shipments' in self._data:
+            self._data['shipments'] = []
+        shipments = self._data['shipments']
+        for shipment_data in shipments:
+            if shipment_data['_id'] == shipment._id:
+                shipments.delete(shipment_data)
+
+    def __repr__(self):
+        return "<Order (%s)>" % str(getattr(self, '_id', '?'))
