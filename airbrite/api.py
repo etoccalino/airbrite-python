@@ -199,13 +199,25 @@ class Order (Fetchable, Listable, Persistable, Entity):
     # Contains cost (integer)
     tax = APIAttribute('tax', default={})
 
+    # Optional shipments connection (object)
+    shipments = APIAttribute('shipments', default=[])
+
     class_url = 'orders'
+
+    def __init__(self, **kwargs):
+        shipments = kwargs.pop('shipments', [])
+        super(Order, self).__init__(**kwargs)
+        for shipment in shipments:
+            self.add_shipment(shipment)
 
     def add_item(self, product, quantity=1):
         self.line_items.append({
             'sku': product.sku,
             'quantity': quantity,
         })
+
+    def add_shipment(self, shipment):
+        self.shipments.append(shipment.to_dict())
 
     def __repr__(self):
         return "<Order (%s)>" % str(getattr(self, '_id', '?'))

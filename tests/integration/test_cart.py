@@ -84,6 +84,7 @@ class CartTestCase (unittest.TestCase):
         self.assertEqual(len(order.line_items), 2)
 
         # Add shipment data to the order
+        shipment
 
         # Add customer data to the order
 

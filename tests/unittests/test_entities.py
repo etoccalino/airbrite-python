@@ -311,8 +311,20 @@ class OrderTestCase(unittest.TestCase):
         order = airbrite.Order()
         self.assertEqual(len(order.line_items), 0)
         order.add_item(product, 2)
-        self.assertTrue(len(order.line_items), 1)
+        self.assertEqual(len(order.line_items), 1)
         self.assertEqual(order.line_items[0]['sku'], 'some-sku')
+
+    def test_add_shipment_on_creation(self):
+        shipment = airbrite.Shipment(status='in_progress')
+        order = airbrite.Order(shipments=[shipment])
+        self.assertEqual(len(order.shipments), 1)
+
+    def test_add_shipment(self):
+        shipment = airbrite.Shipment(status='in_progress')
+        order = airbrite.Order()
+        self.assertEqual(len(order.shipments), 0)
+        order.add_shipment(shipment)
+        self.assertEqual(len(order.shipments), 1)
 
 
 class ListOrderTestCase(unittest.TestCase):
