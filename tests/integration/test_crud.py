@@ -18,6 +18,11 @@ class ProductCRUDTestCase (unittest.TestCase):
         self.assertIsInstance(products, list)
         self.assertIsInstance(products_paging, dict)
 
+    def test_get_products_with_limit(self):
+        products, products_paging = airbrite.api.Product.list(limit=3)
+        self.assertEqual(products_paging['count'], 3)
+        self.assertEqual(len(products), 3)
+
     def test_create_and_retrieve_product(self):
         sku = str(uuid.uuid4())
         price = 150
