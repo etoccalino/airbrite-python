@@ -193,9 +193,8 @@ class OrderTestCase(unittest.TestCase):
     def test_endpoint(self):
         self.assertEqual(airbrite.Order.class_url, 'orders')
         order = airbrite.Order(**self.DATA1)
-        expected = "%(endpoint)s/%(collection)s/%(_id)s" % {
+        expected = "%(endpoint)s/orders/%(_id)s" % {
             'endpoint': airbrite.api.END_POINT,
-            'collection': 'orders',
             '_id': self.DATA1['_id']
         }
         self.assertEqual(order.instance_url(), expected)
@@ -231,7 +230,7 @@ class OrderTestCase(unittest.TestCase):
     def test_create(self):
         data = {
             'customer_id': self.DATA1.get('customer_id'),
-            'currency': self.DATA1.get('currenty'),
+            'currency': self.DATA1.get('currency'),
             'line_items': self.DATA1.get('line_items', []),
             'shipping_address': self.DATA1.get('shipping_address', {}),
             'discount': self.DATA1.get('discount', {}),
@@ -252,7 +251,7 @@ class OrderTestCase(unittest.TestCase):
     def test_save(self):
         data = {
             'customer_id': self.DATA1.get('customer_id'),
-            'currency': self.DATA1.get('currenty'),
+            'currency': self.DATA1.get('currency'),
             'line_items': self.DATA1.get('line_items', []),
             'shipping_address': self.DATA1.get('shipping_address', {}),
             'discount': self.DATA1.get('discount', {}),
@@ -280,7 +279,7 @@ class OrderTestCase(unittest.TestCase):
     def test_is_persisted(self):
         data = {
             'customer_id': self.DATA1.get('customer_id'),
-            'currency': self.DATA1.get('currenty'),
+            'currency': self.DATA1.get('currency'),
             'line_items': self.DATA1.get('line_items', []),
             'shipping_address': self.DATA1.get('shipping_address', {}),
             'discount': self.DATA1.get('discount', {}),
@@ -312,8 +311,50 @@ class OrderTestCase(unittest.TestCase):
         order = airbrite.Order()
         self.assertEqual(len(order.line_items), 0)
         order.add_item(product, 2)
-        self.assertTrue(len(order.line_items), 1)
+        self.assertEqual(len(order.line_items), 1)
         self.assertEqual(order.line_items[0]['sku'], 'some-sku')
+
+    def test_add_shipment_on_creation(self):
+        shipment = airbrite.Shipment(status='in_progress')
+        order = airbrite.Order(shipments=[shipment.to_dict()])
+        self.assertEqual(len(order.shipments), 1)
+
+    def test_add_shipment(self):
+        shipment = airbrite.Shipment(status='in_progress')
+        order = airbrite.Order()
+
+        # Ensure it must be passed dicts
+        self.assertRaises(TypeError, order.add_shipment, shipment)
+
+        self.assertEqual(len(order.shipments), 0)
+        order.add_shipment(shipment.to_dict())
+        self.assertEqual(len(order.shipments), 1)
+        self.assertEqual(order.shipments[0]['status'], 'in_progress')
+
+    def test_add_shipment_data(self):
+        shipment_data = {'status': 'in_progress'}
+        order = airbrite.Order()
+        self.assertEqual(len(order.shipments), 0)
+        order.add_shipment(shipment_data)
+        self.assertEqual(len(order.shipments), 1)
+        self.assertEqual(order.shipments[0]['status'], 'in_progress')
+        shipment = airbrite.Shipment(**order.shipments[0])
+        self.assertEqual(shipment.status, 'in_progress')
+
+    def test_remove_shipment(self):
+        shipment1 = airbrite.Shipment(status='in_progress')
+        shipment2 = airbrite.Shipment(status='pending')
+        order = airbrite.Order(shipments=[shipment1.to_dict(),
+                                          shipment2.to_dict()])
+        self.assertEqual(len(order.shipments), 2)
+
+        # shipment1 does not have an ID yet
+        self.assertRaises(Exception, order.remove_shipment, shipment1)
+
+        # Replace collection, instead of removing a single entry
+        order.shipments = [shipment2.to_dict()]
+        self.assertEqual(len(order.shipments), 1)
+        self.assertEqual(shipment2.status, order.shipments[0]['status'])
 
 
 class ListOrderTestCase(unittest.TestCase):
@@ -357,3 +398,128 @@ class ListOrderTestCase(unittest.TestCase):
         self.assertIsInstance(orders[1], airbrite.Order)
 
         airbrite.Order.client = c
+
+
+class ShipmentTestCase(unittest.TestCase):
+    """Test the actual Shipment, not its REST endpoint functionality"""
+    ORDER = TestClient.CANNED[airbrite.Order][0]
+    SHIP1 = TestClient.CANNED[airbrite.Shipment][0]
+    SHIP2 = TestClient.CANNED[airbrite.Shipment][1]
+
+    def setUp(self):
+        super(ShipmentTestCase, self).setUp()
+        self._client = airbrite.Shipment.client
+        client = TestClient(airbrite.Shipment)
+        airbrite.Shipment.client = client
+
+    def tearDown(self):
+        super(ShipmentTestCase, self).tearDown()
+        airbrite.Shipment.client = self._client
+
+    def test_endpoint(self):
+        shipment = airbrite.Shipment(**self.SHIP1)
+        expected = "%(endpoint)s/orders/%(order_id)s/shipments/%(_id)s" % {
+            'endpoint': airbrite.api.END_POINT,
+            'order_id': self.SHIP1['order_id'],
+            '_id': self.SHIP1['_id']
+        }
+        self.assertEqual(shipment.instance_url(), expected)
+
+    def test_construct(self):
+        shipment = airbrite.Shipment(**self.SHIP1)
+        self.assertIsInstance(shipment, airbrite.Shipment)
+        self.assertEqual(shipment._id, self.SHIP1['_id'])
+        self.assertEqual(shipment.order_id, self.SHIP1['order_id'])
+
+    def test_construct_two(self):
+        shipment1 = airbrite.Shipment(**self.SHIP1)
+        shipment2 = airbrite.Shipment(**self.SHIP2)
+        self.assertIsInstance(shipment1, airbrite.Shipment)
+        self.assertIsInstance(shipment2, airbrite.Shipment)
+        self.assertNotEqual(shipment1._id, shipment2._id)
+        self.assertEqual(shipment1.order_id, self.SHIP1['order_id'])
+        self.assertEqual(shipment2.order_id, self.SHIP1['order_id'])
+
+    def test_fetch(self):
+        shipment = airbrite.Shipment.fetch(_id=self.SHIP1['_id'],
+                                           order_id=self.ORDER['_id'])
+        self.assertIsInstance(shipment, airbrite.Shipment)
+        self.assertEqual(shipment._id, self.SHIP1['_id'])
+        self.assertEqual(shipment.order_id, self.SHIP1['order_id'])
+
+    def test_refresh(self):
+        shipment = airbrite.Shipment(_id=self.SHIP1['_id'],
+                                     order_id=self.SHIP1['order_id'])
+        shipment.refresh()
+        self.assertIsInstance(shipment, airbrite.Shipment)
+        self.assertEqual(shipment._id, self.SHIP1['_id'])
+        self.assertEqual(shipment.order_id, self.SHIP1['order_id'])
+
+    def test_create(self):
+        data = {
+            'order_id': self.SHIP1.get('order_id'),
+            'shipping_address': self.SHIP1.get('shipping_address'),
+        }
+        shipment = airbrite.Shipment.create(**data)
+
+        self.assertEqual(shipment.order_id, data['order_id'])
+        self.assertEqual(shipment.shipping_address, data['shipping_address'])
+
+        self.assertEqual(len(airbrite.Shipment.client._posted), 1)
+        created = airbrite.Shipment.client._posted[0]
+        self.assertTrue('_id' in created)
+        del created['_id']
+        self.assertEqual(created, data)
+
+    def test_create_without_order(self):
+        data = {
+            'shipping_address': self.SHIP1.get('shipping_address'),
+        }
+        self.assertRaises(Exception, airbrite.Shipment.create, **data)
+
+    def test_save(self):
+        data = {
+            'order_id': self.SHIP1.get('order_id'),
+            'shipping_address': self.SHIP1.get('shipping_address'),
+        }
+        shipment = airbrite.Shipment(**data)
+
+        self.assertEqual(shipment.order_id, data['order_id'])
+        self.assertEqual(shipment.shipping_address, data['shipping_address'])
+        shipment.save()
+        self.assertIsNotNone(shipment._id)
+        self.assertEqual(shipment.order_id, data['order_id'])
+        self.assertEqual(shipment.shipping_address, data['shipping_address'])
+
+    def test_save_without_order(self):
+        data = {
+            'shipping_address': self.SHIP1.get('shipping_address'),
+        }
+        self.assertRaises(Exception, airbrite.Shipment.save, **data)
+
+    def test_update(self):
+        DESCRIPTION = 'a new shipment'
+        shipment = airbrite.Shipment.fetch(_id=self.SHIP1['_id'],
+                                           order_id=self.SHIP1['order_id'])
+        self.assertNotEqual(shipment.description, DESCRIPTION)
+        shipment.description = DESCRIPTION
+        shipment.save()
+        self.assertEqual(shipment.description, DESCRIPTION)
+        self.assertEqual(len(airbrite.Shipment.client._put), 1)
+
+    def test_is_persisted(self):
+        data = {
+            'order_id': self.SHIP1.get('order_id'),
+            'shipping_address': self.SHIP1.get('shipping_address'),
+        }
+        shipment = airbrite.Shipment(**data)
+        self.assertTrue(not shipment.is_persisted)
+
+        shipment.save()
+        self.assertEqual(len(airbrite.Shipment.client._posted), 1)
+        self.assertTrue(shipment.is_persisted)
+
+        shipment.save()
+        self.assertEqual(len(airbrite.Shipment.client._posted), 1)
+        self.assertEqual(len(airbrite.Shipment.client._put), 1)
+        self.assertTrue(shipment.is_persisted)

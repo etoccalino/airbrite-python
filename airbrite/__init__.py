@@ -3,7 +3,7 @@ import json
 import api
 
 # Re-export API entities
-from api import Product, Order
+from api import Product, Order, Shipment
 
 
 import logging

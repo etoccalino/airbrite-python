@@ -82,7 +82,7 @@ class Entity (object):
         return "%s/%s" % (self.collection_url(), self._id)
 
     @classmethod
-    def collection_url(cls):
+    def collection_url(cls, **kwargs):
         return "%s/%s" % (END_POINT, cls.class_url)
 
     def __init__(self, **kwargs):
@@ -108,8 +108,8 @@ class Fetchable (object):
         return instance
 
     def refresh(self):
-        if not self._id:
-            raise Exception('refreshing an airbrite entity without ID')
+        if not self.is_persisted:
+            raise Exception('refreshing non-saved airbrite entity')
         data = self.client.get(self.instance_url())
         self.replace(data['data'])
 
@@ -131,7 +131,8 @@ class Listable (object):
 
     @classmethod
     def list(cls, **kwargs):
-        req = cls.client.get(cls.collection_url(), **cls._filters(**kwargs))
+        req = cls.client.get(cls.collection_url(**kwargs),
+                             **cls._filters(**kwargs))
         cls.logger.debug('list() got from backend: %s' % req['data'])
         results = [cls(**data) for data in req['data']]
         paging = req['paging']
@@ -143,13 +144,14 @@ class Persistable (object):
 
     @classmethod
     def create(cls, **kwargs):
-        data = cls.client.post(cls.collection_url(), **kwargs)
+        data = cls.client.post(cls.collection_url(**kwargs), **kwargs)
         cls.logger.debug('create() got from backend: %s' % data)
         return cls(**data['data'])
 
-    def save(self):
+    def save(self, **kwargs):
         if not self.is_persisted:
-            data = self.client.post(self.collection_url(), **self.to_dict())
+            data = self.client.post(self.collection_url(**kwargs),
+                                    **self.to_dict())
         else:
             data = self.client.put(self.instance_url(), **self.to_dict())
         self.logger.debug('save() from backend: %s' % data)
@@ -162,7 +164,7 @@ class Persistable (object):
 
 ###############################################################################
 
-class Product (Entity, Fetchable, Listable, Persistable):
+class Product (Fetchable, Listable, Persistable, Entity):
 
     class_url = 'products'
 
@@ -174,7 +176,50 @@ class Product (Entity, Fetchable, Listable, Persistable):
         return "<Product (%s)>" % str(getattr(self, '_id', '?'))
 
 
-class Order (Entity, Fetchable, Listable, Persistable):
+class Shipment (Fetchable, Listable, Persistable, Entity):
+
+    order_id = APIAttribute('order_id')
+    courier = APIAttribute('courier', default='')
+    shipping_address = APIAttribute('shipping_address', default={})
+    tracking = APIAttribute('tracking')
+    method = APIAttribute('method')
+    status = APIAttribute('status')
+
+    class_url = 'orders/%(order_id)s/shipments'
+
+    @classmethod
+    def collection_url(cls, order_id=order_id, **kwargs):
+        relative_url = cls.class_url % {'order_id': order_id}
+        return "%s/%s" % (END_POINT, relative_url)
+
+    def instance_url(self):
+        if not self._id:
+            raise Exception('must have _id to have a URL')
+        if not self.order_id:
+            raise Exception('must have order_id to have a URL')
+        return "%s/%s" % (self.collection_url(order_id=self.order_id),
+                          self._id)
+
+    @classmethod
+    def create(cls, **kwargs):
+        order_id = kwargs.get('order_id', None)
+        if not order_id:
+            raise Exception('need an order_id to create a shipment')
+        return super(Shipment, cls).create(**kwargs)
+
+    def save(self):
+        if not self.order_id:
+            raise Exception('saving a shipment requires a valid order_id')
+        super(Shipment, self).save(order_id=self.order_id)
+
+    @property
+    def is_persisted(self):
+        if self.order_id:
+            return super(Shipment, self).is_persisted
+        return False
+
+
+class Order (Fetchable, Listable, Persistable, Entity):
 
     customer_id = APIAttribute('customer_id')
     currency = APIAttribute('currency')  # 3-letter ISO currency code
@@ -197,13 +242,45 @@ class Order (Entity, Fetchable, Listable, Persistable):
     # Contains cost (integer)
     tax = APIAttribute('tax', default={})
 
+    # Optional shipments connection (object)
+    # TODO: make this attribute a nested entity collection
+    shipments = APIAttribute('shipments', default=[])
+
     class_url = 'orders'
+
+    def __init__(self, **kwargs):
+        shipments = kwargs.pop('shipments', [])
+        super(Order, self).__init__(**kwargs)
+        for shipment in shipments:
+            self.add_shipment(shipment)
 
     def add_item(self, product, quantity=1):
         self.line_items.append({
             'sku': product.sku,
             'quantity': quantity,
         })
+
+    def add_shipment(self, shipment_data):
+        if type(shipment_data) is not dict:
+            raise TypeError('use to_dict() to pass a dict of values')
+        self.shipments.append(shipment_data)
+
+    def remove_shipment(self, shipment_data):
+        if type(shipment_data) is not dict:
+            raise TypeError('use to_dict() to pass a dict of values')
+
+        # Must have an _id to remove
+        if '_id' not in shipment_data or not shipment_data['_id']:
+            raise Exception('shipment does not have an ID')
+
+        if not 'shipments' in self._data:
+            self._data['shipments'] = []
+
+        # Remove by value of _id
+        shipments = self._data['shipments']
+        for data in shipments:
+            if data['_id'] == shipment_data['_id']:
+                shipments.delete(data)
 
     def __repr__(self):
         return "<Order (%s)>" % str(getattr(self, '_id', '?'))

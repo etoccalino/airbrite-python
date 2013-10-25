@@ -28,7 +28,7 @@ class Client(object):
         logger.debug('calling %s on %s with %s' % (method, url, params))
         req = getattr(requests, method)(url, auth=self.auth,
                                         headers=self.headers,
-                                        data=json.dumps(params))
+                                        **params)
         if req.status_code != 200:
             logger.warning('%s() call failed with status code %s, response: %s'
                            % (method, req.status_code, req.json()))
@@ -36,10 +36,10 @@ class Client(object):
         return req.json()
 
     def get(self, url, **params):
-        return self.meth('get', url, **params)
+        return self.meth('get', url, params=params)
 
     def post(self, url, **params):
-        return self.meth('post', url, **params)
+        return self.meth('post', url, data=json.dumps(params))
 
     def put(self, url, **params):
-        return self.meth('put', url, **params)
+        return self.meth('put', url, data=json.dumps(params))
