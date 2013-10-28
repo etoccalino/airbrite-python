@@ -534,9 +534,6 @@ class ShipmentTestCase(unittest.TestCase):
         self.assertTrue(shipment.is_persisted)
 
 
-
-
-
 class CustomerTestCase(unittest.TestCase):
     """Test the actual Customer, not its REST endpoint functionality"""
     DATA1 = TestClient.CANNED[airbrite.Customer][0]
@@ -581,6 +578,8 @@ class CustomerTestCase(unittest.TestCase):
         self.assertIsInstance(customer, airbrite.Customer)
         self.assertEqual(customer._id, self.DATA1['_id'])
         self.assertEqual(customer.user_id, self.DATA1['user_id'])
+        self.assertEqual(customer.stripe_customer_id,
+                         self.DATA1['stripe']['customer_id'])
 
     def test_refresh(self):
         customer = airbrite.Customer(_id=self.DATA1['_id'])

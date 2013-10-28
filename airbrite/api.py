@@ -326,14 +326,11 @@ class Customer (Fetchable, Listable, Persistable, Entity):
 
     class_url = 'customers'
 
-    @classmethod
-    def create(cls, **kwargs):
-        customer = super(Customer, cls).create(**kwargs)
-        # Extract the customer_id
-        stripe_data = customer._data.get('stripe', {})
+    def replace(self, data):
+        super(Customer, self).replace(data)
+        stripe_data = data.get('stripe', {})
         if 'customer_id' in stripe_data:
-            customer.customer_id = stripe_data['customer_id']
-        return customer
+            self.stripe_customer_id = stripe_data['customer_id']
 
 
 class Order (Fetchable, Listable, Persistable, Entity):
@@ -360,7 +357,6 @@ class Order (Fetchable, Listable, Persistable, Entity):
     tax = APIAttribute('tax', default={})
 
     # Optional shipments connection (object)
-    # TODO: make this attribute a nested entity collection
     shipments = APICollectionAttribute('shipments', Shipment)
 
     class_url = 'orders'

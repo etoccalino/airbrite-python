@@ -127,6 +127,12 @@ class TestClient(object):
             "metadata": {},
             "name": "test customer 1",
             "email": "no@addr.com",
+            "stripe": {
+                "cards": [],
+                "customer_id": "cus_2q0hhWrrcLHZci",
+                "default_card": {},
+                "livemode": False,
+            }
         }, {
             "_id": "52696f72291468040000003f",
             "user_id": "5237a347429acf0400000014",
@@ -137,6 +143,12 @@ class TestClient(object):
             "metadata": {},
             "name": "test customer 2",
             "email": "no@addr.com",
+            "stripe": {
+                "cards": [],
+                "customer_id": "cus_2q0hhWrrcLHZci",
+                "default_card": {},
+                "livemode": False,
+            }
         }]
     }
 
