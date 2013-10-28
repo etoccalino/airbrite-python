@@ -532,3 +532,42 @@ class ShipmentTestCase(unittest.TestCase):
         self.assertEqual(len(airbrite.Shipment.client._posted), 1)
         self.assertEqual(len(airbrite.Shipment.client._put), 1)
         self.assertTrue(shipment.is_persisted)
+
+
+class PaymentTestCase(unittest.TestCase):
+    """Test the actual Shipment, not its REST endpoint functionality"""
+
+    def setUp(self):
+        self.ORDER = TestClient.CANNED[airbrite.Order][0].copy()
+        self.PAY = TestClient.CANNED[airbrite.Payment][0].copy()
+
+    def test_construct(self):
+        payment = airbrite.Payment(**self.PAY)
+        self.assertIsInstance(payment, airbrite.Payment)
+        self.assertEqual(payment._id, self.PAY['_id'])
+        self.assertEqual(payment.order_id, self.PAY['order_id'])
+
+    def test_add_to_order(self):
+        del self.PAY['order_id']
+        order = airbrite.Order(**self.ORDER)
+        payment = airbrite.Payment(**self.PAY)
+
+        self.assertEqual(len(order.payments), 0)
+        order.payments.add(payment)
+        self.assertEqual(len(order.payments), 1)
+
+    def test_remove_to_order(self):
+        del self.PAY['order_id']
+        order = airbrite.Order(**self.ORDER)
+        payment = airbrite.Payment(**self.PAY)
+
+        self.assertEqual(len(order.payments), 0)
+        order.payments.add(payment)
+        self.assertEqual(len(order.payments), 1)
+
+        del payment
+        payment = airbrite.Payment(**self.PAY)
+
+        self.assertEqual(len(order.payments), 1)
+        order.payments.remove(payment)
+        self.assertEqual(len(order.payments), 0)

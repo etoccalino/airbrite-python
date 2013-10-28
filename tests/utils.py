@@ -2,7 +2,7 @@
 A client implements get, put, post and
 """
 import copy
-from airbrite import Product, Order, Shipment
+from airbrite import Product, Order, Shipment, Payment
 
 
 class TestClient(object):
@@ -115,6 +115,40 @@ class TestClient(object):
             "shipping_address": None,
             "updated": 1382641572,
             "updated_date": "2013-10-24T19:06:12.571Z",
+            "user_id": "5237a347429acf0400000013"
+        }],
+        Payment: [{
+            "_id": "526ec08935982a0700000284",
+            "amount": 995,
+            "billing_address": {
+                "city": None,
+                "country": None,
+                "line1": None,
+                "line2": None,
+                "state": None,
+                "zip": None
+            },
+            "captured": True,
+            "card": {
+                "exp_month": 9,
+                "exp_year": 2019,
+                "last4": "4242",
+                "type": "Visa"
+            },
+            "charge_created": 1380153798,
+            "charge_token": "ch_2djiAbQIPi1BEL",
+            "created": 1382989961,
+            "created_date": "2013-10-28T19:52:41.717Z",
+            "currency": "usd",
+            "gateway": "stripe",
+            "livemode": False,
+            "metadata": {},
+            "order_id": "526ec08935982a0700000283",
+            "paid": True,
+            "processed": True,
+            "refunded": False,
+            "updated": 1382989961,
+            "updated_date": "2013-10-28T19:52:41.718Z",
             "user_id": "5237a347429acf0400000013"
         }]
     }
