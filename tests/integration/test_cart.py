@@ -3,6 +3,19 @@ import uuid
 import airbrite
 
 
+def get_card_token():
+    """Return a card token using test Stripe API key and test card data"""
+    import stripe
+    stripe.api_key = 'sk_test_mkGsLqEW6SLnZa487HYfJVLf'
+    card = {
+        'number': '4242424242424242',
+        'exp_month': 12,
+        'exp_year': 2014,
+        'cvc': '123'
+    }
+    return stripe.Token.create(card=card).id
+
+
 class CartTestCase (unittest.TestCase):
     "Test a workflow akin to that of a shopping cart"
 
@@ -106,3 +119,44 @@ class CartTestCase (unittest.TestCase):
         self.assertTrue(product2.sku in SKUs)
 
         self.assertEqual(len(order.shipments), 1)
+
+    def test_payment_cart(self):
+        product_data = {
+            'name': 'Product One',
+            'sku': str(uuid.uuid4()),
+            'price': 50,
+        }
+        amount = 995
+        card_token = get_card_token()
+
+        # Create the products
+        product = airbrite.Product.create(**product_data)
+        self.assertIsNotNone(product._id)
+
+        # Create an order, WITHOUT saving it to the backend
+        order = airbrite.Order()
+
+        # Add a product
+        order.add_item(product, 2)
+        self.assertEqual(len(order.line_items), 1)
+
+        # Add payment data
+        payment = airbrite.Payment(amount=amount, card_token=card_token)
+        order.payments.add(payment)
+
+        # Create the order in the backend
+        order.save()
+        self.assertIsNotNone(order._id)
+
+        # Fetch it back, and see the products in the order
+        _id = order._id
+        del order
+        order = airbrite.Order.fetch(_id=_id)
+
+        # Check that the product order is good
+        self.assertEqual(len(order.line_items), 1)
+        self.assertEqual(product.sku, order.line_items[0]['sku'])
+
+        # Check the payment data
+        self.assertEqual(len(order.payments), 1)
+        self.assertEqual(order.payments[0].amount, amount)

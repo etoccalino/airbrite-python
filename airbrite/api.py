@@ -254,6 +254,27 @@ class Persistable (object):
         return self._id and not self._id == ''
 
 
+class PersistableInOrder (Persistable):
+
+    @classmethod
+    def create(cls, **kwargs):
+        order_id = kwargs.get('order_id', None)
+        if not order_id:
+            raise Exception('need an order_id to create this entity')
+        return super(PersistableInOrder, cls).create(**kwargs)
+
+    def save(self):
+        if not self.order_id:
+            raise Exception('saving this entity requires a valid order_id')
+        super(PersistableInOrder, self).save(order_id=self.order_id)
+
+    @property
+    def is_persisted(self):
+        if self.order_id:
+            return super(PersistableInOrder, self).is_persisted
+        return False
+
+
 ###############################################################################
 
 class Product (Fetchable, Listable, Persistable, Entity):
@@ -268,16 +289,8 @@ class Product (Fetchable, Listable, Persistable, Entity):
         return "<Product (%s)>" % str(getattr(self, '_id', '?'))
 
 
-class Shipment (Fetchable, Listable, Persistable, Entity):
-
+class EntityInOrder (Entity):
     order_id = APIAttribute('order_id')
-    courier = APIAttribute('courier', default='')
-    shipping_address = APIAttribute('shipping_address', default={})
-    tracking = APIAttribute('tracking')
-    method = APIAttribute('method')
-    status = APIAttribute('status')
-
-    class_url = 'orders/%(order_id)s/shipments'
 
     @classmethod
     def collection_url(cls, order_id=order_id, **kwargs):
@@ -292,23 +305,42 @@ class Shipment (Fetchable, Listable, Persistable, Entity):
         return "%s/%s" % (self.collection_url(order_id=self.order_id),
                           self._id)
 
-    @classmethod
-    def create(cls, **kwargs):
-        order_id = kwargs.get('order_id', None)
-        if not order_id:
-            raise Exception('need an order_id to create a shipment')
-        return super(Shipment, cls).create(**kwargs)
 
-    def save(self):
-        if not self.order_id:
-            raise Exception('saving a shipment requires a valid order_id')
-        super(Shipment, self).save(order_id=self.order_id)
+class Shipment (Fetchable, Listable, PersistableInOrder, EntityInOrder):
 
-    @property
-    def is_persisted(self):
-        if self.order_id:
-            return super(Shipment, self).is_persisted
-        return False
+    courier = APIAttribute('courier', default='')
+    shipping_address = APIAttribute('shipping_address', default={})
+    tracking = APIAttribute('tracking')
+    method = APIAttribute('method')
+    status = APIAttribute('status')
+
+    class_url = 'orders/%(order_id)s/shipments'
+
+
+class Payment (EntityInOrder):
+
+    # 3-letter ISO currency code
+    currency = APIAttribute('currency', default='usd')
+    gateway = APIAttribute('gateway', default='stripe')
+    amount = APIAttribute('amount')
+
+    # customer_token = APIAttribute('customer_token')
+    # customer_card_token = APIAttribute('customer_card_token')
+    # charge_token = APIAttribute('charge_token')
+    card_token = APIAttribute('card_token')
+
+    capture = APIAttribute('capture', default='charge')
+
+    paid = APIAttribute('paid', default=False)
+    refunded = APIAttribute('refunded', default=False)
+    captured = APIAttribute('captured', default=False)
+    charge_created = APIAttribute('charge_created', default=False)
+    processed = APIAttribute('processed', default=False)
+
+    # card = APIAttribute('card', default={})
+    # billing_address = APIAttribute('billing_address', default={})
+
+    class_url = 'orders/%(order_id)s/payments'
 
 
 class Order (Fetchable, Listable, Persistable, Entity):
@@ -335,8 +367,10 @@ class Order (Fetchable, Listable, Persistable, Entity):
     tax = APIAttribute('tax', default={})
 
     # Optional shipments connection (object)
-    # TODO: make this attribute a nested entity collection
     shipments = APICollectionAttribute('shipments', Shipment)
+
+    # Optional payments connection (object)
+    payments = APICollectionAttribute('payments', Payment)
 
     class_url = 'orders'
 
