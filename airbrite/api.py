@@ -311,6 +311,25 @@ class Shipment (Fetchable, Listable, Persistable, Entity):
         return False
 
 
+class Customer (Fetchable, Listable, Persistable, Entity):
+
+    user_id = APIAttribute('user_id')
+    name = APIAttribute('name')
+    email = APIAttribute('email')
+    address = APIAttribute('address', default={})
+    addresses = APIAttribute('addresses', default=[])
+
+    # Contains name, line1, line2, city, state, zip, country, phone
+    default_address = APIAttribute('default_address', default={})
+
+    card_token = APIAttribute('card_token')
+    stripe = APIAttribute('strip')
+    stripe_customer_id = APIAttribute('stripe_customer_id')
+    match = APIAttribute('match')
+
+    class_url = 'customers'
+
+
 class Order (Fetchable, Listable, Persistable, Entity):
 
     customer_id = APIAttribute('customer_id')

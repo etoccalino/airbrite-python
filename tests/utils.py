@@ -2,7 +2,7 @@
 A client implements get, put, post and
 """
 import copy
-from airbrite import Product, Order, Shipment
+from airbrite import Product, Order, Shipment, Customer
 
 
 class TestClient(object):
@@ -116,6 +116,27 @@ class TestClient(object):
             "updated": 1382641572,
             "updated_date": "2013-10-24T19:06:12.571Z",
             "user_id": "5237a347429acf0400000013"
+        }],
+        Customer: [{
+            "_id": "52696f72291468040000003e",
+            "user_id": "5237a347429acf0400000013",
+            "created": 1382641522,
+            "created_date": "2013-10-24T19:05:22.134Z",
+            "updated": 1382641522,
+            "updated_date": "2013-10-24T19:05:22.134Z",
+            "metadata": {},
+            "name": "test customer 1",
+            "email": "no@addr.com",
+        }, {
+            "_id": "52696f72291468040000003f",
+            "user_id": "5237a347429acf0400000014",
+            "created": 1382641522,
+            "created_date": "2013-10-24T19:05:22.134Z",
+            "updated": 1382641522,
+            "updated_date": "2013-10-24T19:05:22.134Z",
+            "metadata": {},
+            "name": "test customer 2",
+            "email": "no@addr.com",
         }]
     }
 

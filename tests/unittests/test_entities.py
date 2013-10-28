@@ -532,3 +532,166 @@ class ShipmentTestCase(unittest.TestCase):
         self.assertEqual(len(airbrite.Shipment.client._posted), 1)
         self.assertEqual(len(airbrite.Shipment.client._put), 1)
         self.assertTrue(shipment.is_persisted)
+
+
+
+
+
+class CustomerTestCase(unittest.TestCase):
+    """Test the actual Customer, not its REST endpoint functionality"""
+    DATA1 = TestClient.CANNED[airbrite.Customer][0]
+    DATA2 = TestClient.CANNED[airbrite.Customer][1]
+
+    def setUp(self):
+        super(CustomerTestCase, self).setUp()
+        self._client = airbrite.Customer.client
+        client = TestClient(airbrite.Customer)
+        airbrite.Customer.client = client
+
+    def tearDown(self):
+        super(CustomerTestCase, self).tearDown()
+        airbrite.Customer.client = self._client
+
+    def test_endpoint(self):
+        self.assertEqual(airbrite.Customer.class_url, 'customers')
+        customer = airbrite.Customer(**self.DATA1)
+        expected = "%(endpoint)s/customers/%(_id)s" % {
+            'endpoint': airbrite.api.END_POINT,
+            '_id': self.DATA1['_id']
+        }
+        self.assertEqual(customer.instance_url(), expected)
+
+    def test_construct(self):
+        customer = airbrite.Customer(**self.DATA1)
+        self.assertIsInstance(customer, airbrite.Customer)
+        self.assertEqual(customer._id, self.DATA1['_id'])
+        self.assertEqual(customer.user_id, self.DATA1['user_id'])
+
+    def test_construct_two(self):
+        customer1 = airbrite.Customer(**self.DATA1)
+        customer2 = airbrite.Customer(**self.DATA2)
+        self.assertIsInstance(customer1, airbrite.Customer)
+        self.assertIsInstance(customer2, airbrite.Customer)
+        self.assertNotEqual(customer1._id, customer2._id)
+        self.assertEqual(customer1.user_id, self.DATA1['user_id'])
+        self.assertEqual(customer2.user_id, self.DATA2['user_id'])
+
+    def test_fetch(self):
+        customer = airbrite.Customer.fetch(_id=self.DATA1['_id'])
+        self.assertIsInstance(customer, airbrite.Customer)
+        self.assertEqual(customer._id, self.DATA1['_id'])
+        self.assertEqual(customer.user_id, self.DATA1['user_id'])
+
+    def test_refresh(self):
+        customer = airbrite.Customer(_id=self.DATA1['_id'])
+        customer.refresh()
+        self.assertIsInstance(customer, airbrite.Customer)
+        self.assertEqual(customer._id, self.DATA1['_id'])
+        self.assertEqual(customer.user_id, self.DATA1['user_id'])
+
+    def test_create(self):
+        data = {
+            'name': self.DATA1.get('name'),
+            'description': self.DATA1.get('description'),
+            'metadata': self.DATA1.get('metadata'),
+        }
+        customer = airbrite.Customer.create(**data)
+        self.assertEqual(customer.name, data['name'])
+
+        self.assertEqual(len(airbrite.Customer.client._posted), 1)
+        created = airbrite.Customer.client._posted[0]
+        self.assertTrue('_id' in created)
+        del created['_id']
+        self.assertEqual(created, data)
+
+    def test_save(self):
+        data = {
+            'name': self.DATA1.get('name'),
+            'description': self.DATA1.get('description'),
+            'metadata': self.DATA1.get('metadata'),
+        }
+        customer = airbrite.Customer(**data)
+        self.assertEqual(customer.name, data['name'])
+        customer.save()
+        self.assertIsNotNone(customer._id)
+        self.assertEqual(customer.name, data['name'])
+
+    def test_update(self):
+        NAME = 'a new name'
+        customer = airbrite.Customer.fetch(_id=self.DATA1['_id'])
+        self.assertNotEqual(customer.name, NAME)
+        customer.name = NAME
+        customer.save()
+        self.assertEqual(customer.name, NAME)
+        self.assertEqual(len(airbrite.Customer.client._put), 1)
+
+    def test_is_persisted(self):
+        data = {
+            'sku': self.DATA1.get('sku'),
+            'price': self.DATA1.get('price'),
+            'name': self.DATA1.get('name'),
+            'description': self.DATA1.get('description'),
+            'metadata': self.DATA1.get('metadata'),
+        }
+        customer = airbrite.Customer(**data)
+        self.assertTrue(not customer.is_persisted)
+
+        customer.save()
+        self.assertEqual(len(airbrite.Customer.client._posted), 1)
+        self.assertTrue(customer.is_persisted)
+
+        customer.save()
+        self.assertEqual(len(airbrite.Customer.client._posted), 1)
+        self.assertEqual(len(airbrite.Customer.client._put), 1)
+        self.assertTrue(customer.is_persisted)
+
+    def test_full_list(self):
+        customers, paging = airbrite.Customer.list()
+        self.assertEqual(len(customers), 2)
+        self.assertEqual(paging['count'], 2)
+        self.assertEqual(paging['total'], 2)
+        self.assertIsInstance(customers[0], airbrite.Customer)
+        self.assertIsInstance(customers[1], airbrite.Customer)
+
+
+class ListCustomerTestCase(unittest.TestCase):
+
+    DATA1 = TestClient.CANNED[airbrite.Customer][0]
+    DATA2 = TestClient.CANNED[airbrite.Customer][1]
+
+    def setUp(self):
+        super(ListCustomerTestCase, self).setUp()
+        self._client = airbrite.Customer.client
+
+        self.mockClient = mock.MagicMock()
+        self.mockClient.get = mock.MagicMock()
+        self.mockClient.put = mock.MagicMock()
+        self.mockClient.post = mock.MagicMock()
+        airbrite.Customer.client = self.mockClient
+
+    def tearDown(self):
+        super(ListCustomerTestCase, self).tearDown()
+        airbrite.Customer.client = self._client
+
+    def test_list_filters(self):
+        _, _ = airbrite.Customer.list(limit=1, offset=1, sort='field')
+        self.mockClient.get.assert_called_once_with(
+            airbrite.Customer.collection_url(),
+            limit=1, offset=1, sort='field')
+
+    def test_list_bad_filters(self):
+        self.assertRaises(Exception, airbrite.Customer.list,
+                          limit=1, offset='two', sort='field')
+
+    def test_full_list(self):
+        c = airbrite.Customer.client
+        airbrite.Customer.client = TestClient(airbrite.Customer)
+
+        customers, paging = airbrite.Customer.list()
+        self.assertEqual(len(customers), 2)
+        self.assertEqual(paging['count'], 2)
+        self.assertEqual(paging['total'], 2)
+        self.assertIsInstance(customers[0], airbrite.Customer)
+        self.assertIsInstance(customers[1], airbrite.Customer)
+
+        airbrite.Customer.client = c
