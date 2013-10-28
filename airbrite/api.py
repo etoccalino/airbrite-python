@@ -58,6 +58,22 @@ class DateAPIAttribute (APIAttribute):
             instance._data[_date_name] = iso_date
 
 
+class APICollectionAttribute (object):
+
+    def __init__(self, name, entity):
+        self.name = name
+        self.entity = entity
+
+    def __get__(self, instance, owner):
+        data = instance._data.get(self.name, [])
+        return [self.entity(**datum) for datum in data]
+
+    def __set__(self, instance, values):
+        if values and not isinstance(values[0], dict):
+            values = [v.to_dict() for v in values]
+        instance._data[self.name] = values
+
+
 ###############################################################################
 
 
@@ -252,15 +268,14 @@ class Order (Fetchable, Listable, Persistable, Entity):
 
     # Optional shipments connection (object)
     # TODO: make this attribute a nested entity collection
-    shipments = APIAttribute('shipments', default=[])
+    shipments = APICollectionAttribute('shipments', Shipment)
 
     class_url = 'orders'
 
     def __init__(self, **kwargs):
         shipments = kwargs.pop('shipments', [])
         super(Order, self).__init__(**kwargs)
-        for shipment in shipments:
-            self.add_shipment(shipment)
+        self.shipments = shipments
 
     def add_item(self, product, quantity=1):
         self.line_items.append({
@@ -268,27 +283,17 @@ class Order (Fetchable, Listable, Persistable, Entity):
             'quantity': quantity,
         })
 
-    def add_shipment(self, shipment_data):
-        if type(shipment_data) is not dict:
-            raise TypeError('use to_dict() to pass a dict of values')
-        self.shipments.append(shipment_data)
+    def add_shipment(self, shipment):
+        if isinstance(shipment, dict):
+            shipment = Shipment(**shipment)
+        self.shipments = self.shipments + [shipment]
 
-    def remove_shipment(self, shipment_data):
-        if type(shipment_data) is not dict:
-            raise TypeError('use to_dict() to pass a dict of values')
-
+    def remove_shipment(self, shipment):
         # Must have an _id to remove
-        if '_id' not in shipment_data or not shipment_data['_id']:
+        if not shipment._id:
             raise Exception('shipment does not have an ID')
 
-        if not 'shipments' in self._data:
-            self._data['shipments'] = []
-
-        # Remove by value of _id
-        shipments = self._data['shipments']
-        for data in shipments:
-            if data['_id'] == shipment_data['_id']:
-                shipments.delete(data)
+        self.shipments = [s for s in self.shipments if s != shipment]
 
     def __repr__(self):
         return "<Order (%s)>" % str(getattr(self, '_id', '?'))

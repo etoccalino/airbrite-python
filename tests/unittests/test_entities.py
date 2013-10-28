@@ -316,45 +316,39 @@ class OrderTestCase(unittest.TestCase):
 
     def test_add_shipment_on_creation(self):
         shipment = airbrite.Shipment(status='in_progress')
-        order = airbrite.Order(shipments=[shipment.to_dict()])
+        order = airbrite.Order(shipments=[shipment])
         self.assertEqual(len(order.shipments), 1)
 
     def test_add_shipment(self):
         shipment = airbrite.Shipment(status='in_progress')
         order = airbrite.Order()
 
-        # Ensure it must be passed dicts
-        self.assertRaises(TypeError, order.add_shipment, shipment)
-
         self.assertEqual(len(order.shipments), 0)
-        order.add_shipment(shipment.to_dict())
+        order.add_shipment(shipment)
         self.assertEqual(len(order.shipments), 1)
-        self.assertEqual(order.shipments[0]['status'], 'in_progress')
+        self.assertEqual(order.shipments[0].status, 'in_progress')
 
-    def test_add_shipment_data(self):
+    def test_add_shipments(self):
         shipment_data = {'status': 'in_progress'}
         order = airbrite.Order()
         self.assertEqual(len(order.shipments), 0)
         order.add_shipment(shipment_data)
         self.assertEqual(len(order.shipments), 1)
-        self.assertEqual(order.shipments[0]['status'], 'in_progress')
-        shipment = airbrite.Shipment(**order.shipments[0])
-        self.assertEqual(shipment.status, 'in_progress')
+        self.assertEqual(order.shipments[0].status, 'in_progress')
 
     def test_remove_shipment(self):
         shipment1 = airbrite.Shipment(status='in_progress')
         shipment2 = airbrite.Shipment(status='pending')
-        order = airbrite.Order(shipments=[shipment1.to_dict(),
-                                          shipment2.to_dict()])
+        order = airbrite.Order(shipments=[shipment1, shipment2])
         self.assertEqual(len(order.shipments), 2)
 
         # shipment1 does not have an ID yet
         self.assertRaises(Exception, order.remove_shipment, shipment1)
 
         # Replace collection, instead of removing a single entry
-        order.shipments = [shipment2.to_dict()]
+        order.shipments = [shipment2]
         self.assertEqual(len(order.shipments), 1)
-        self.assertEqual(shipment2.status, order.shipments[0]['status'])
+        self.assertEqual(shipment2.status, order.shipments[0].status)
 
 
 class ListOrderTestCase(unittest.TestCase):
