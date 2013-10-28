@@ -90,21 +90,19 @@ class OrderCRUDTestCase (unittest.TestCase):
         }]
         shipment1 = airbrite.Shipment(**shipments_data[0])
         shipment2 = airbrite.Shipment(**shipments_data[1])
-        order = airbrite.Order(shipments=[shipment1.to_dict(),
-                                          shipment2.to_dict()])
+        order = airbrite.Order(shipments=[shipment1, shipment2])
         self.assertEqual(len(order.shipments), 2)
         order.save()
 
         same_order = airbrite.Order.fetch(_id=order._id)
 
-        shipments = same_order.shipments
-        self.assertEqual(len(shipments), 2)
+        self.assertEqual(len(same_order.shipments), 2)
 
-        curier_data = set(s['courier'] for s in shipments)
+        curier_data = set(s.courier for s in same_order.shipments)
         self.assertTrue(shipments_data[0]['courier'] in curier_data)
         self.assertTrue(shipments_data[1]['courier'] in curier_data)
 
-        status_data = set(s['status'] for s in shipments)
+        status_data = set(s.status for s in same_order.shipments)
         self.assertTrue(shipments_data[0]['status'] in status_data)
         self.assertTrue(shipments_data[1]['status'] in status_data)
 
