@@ -85,7 +85,7 @@ class CartTestCase (unittest.TestCase):
 
         # Add shipment data to the order
         shipment = airbrite.Shipment(metadata={'note': 'stubbed shipment'})
-        order.add_shipment(shipment.to_dict())
+        order.shipments.add(shipment)
 
         # Add customer data to the order
 
