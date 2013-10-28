@@ -351,17 +351,5 @@ class Order (Fetchable, Listable, Persistable, Entity):
             'quantity': quantity,
         })
 
-    def add_shipment(self, shipment):
-        if isinstance(shipment, dict):
-            shipment = Shipment(**shipment)
-        self.shipments = self.shipments + [shipment]
-
-    def remove_shipment(self, shipment):
-        # Must have an _id to remove
-        if not shipment._id:
-            raise Exception('shipment does not have an ID')
-
-        self.shipments = [s for s in self.shipments if s != shipment]
-
     def __repr__(self):
         return "<Order (%s)>" % str(getattr(self, '_id', '?'))
