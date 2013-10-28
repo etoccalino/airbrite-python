@@ -316,45 +316,43 @@ class OrderTestCase(unittest.TestCase):
 
     def test_add_shipment_on_creation(self):
         shipment = airbrite.Shipment(status='in_progress')
-        order = airbrite.Order(shipments=[shipment.to_dict()])
+        order = airbrite.Order(shipments=[shipment])
         self.assertEqual(len(order.shipments), 1)
 
     def test_add_shipment(self):
         shipment = airbrite.Shipment(status='in_progress')
         order = airbrite.Order()
 
-        # Ensure it must be passed dicts
-        self.assertRaises(TypeError, order.add_shipment, shipment)
-
         self.assertEqual(len(order.shipments), 0)
-        order.add_shipment(shipment.to_dict())
+        order.shipments.add(shipment)
         self.assertEqual(len(order.shipments), 1)
-        self.assertEqual(order.shipments[0]['status'], 'in_progress')
+        self.assertEqual(order.shipments[0].status, 'in_progress')
 
-    def test_add_shipment_data(self):
-        shipment_data = {'status': 'in_progress'}
+    def test_add_shipments(self):
+        shipment1 = airbrite.Shipment(status='in_progress')
+        shipment2 = airbrite.Shipment(status='halted')
         order = airbrite.Order()
         self.assertEqual(len(order.shipments), 0)
-        order.add_shipment(shipment_data)
-        self.assertEqual(len(order.shipments), 1)
-        self.assertEqual(order.shipments[0]['status'], 'in_progress')
-        shipment = airbrite.Shipment(**order.shipments[0])
-        self.assertEqual(shipment.status, 'in_progress')
+        order.shipments.add(shipment1)
+        order.shipments.add(shipment2)
+        self.assertEqual(len(order.shipments), 2)
+        all_status = [s.status for s in order.shipments]
+        self.assertTrue('in_progress' in all_status)
 
     def test_remove_shipment(self):
-        shipment1 = airbrite.Shipment(status='in_progress')
+        shipment1 = airbrite.Shipment(_id='123', status='in_progress')
         shipment2 = airbrite.Shipment(status='pending')
-        order = airbrite.Order(shipments=[shipment1.to_dict(),
-                                          shipment2.to_dict()])
+        order = airbrite.Order(shipments=[shipment1, shipment2])
+        self.assertIsInstance(order.shipments, airbrite.api.EntityCollection)
         self.assertEqual(len(order.shipments), 2)
 
         # shipment1 does not have an ID yet
-        self.assertRaises(Exception, order.remove_shipment, shipment1)
+        self.assertRaises(Exception, order.shipments.remove, shipment2)
 
         # Replace collection, instead of removing a single entry
-        order.shipments = [shipment2.to_dict()]
+        order.shipments.remove(shipment1)
         self.assertEqual(len(order.shipments), 1)
-        self.assertEqual(shipment2.status, order.shipments[0]['status'])
+        self.assertEqual(shipment2.status, order.shipments[0].status)
 
 
 class ListOrderTestCase(unittest.TestCase):
@@ -439,6 +437,17 @@ class ShipmentTestCase(unittest.TestCase):
         self.assertNotEqual(shipment1._id, shipment2._id)
         self.assertEqual(shipment1.order_id, self.SHIP1['order_id'])
         self.assertEqual(shipment2.order_id, self.SHIP1['order_id'])
+
+    def test_comparison(self):
+        shipment1 = airbrite.Shipment(**self.SHIP1)
+        shipment2 = airbrite.Shipment(**self.SHIP2)
+        shipment1_prime = airbrite.Shipment(**self.SHIP1)
+
+        self.assertEqual(shipment1, shipment1_prime)
+        self.assertNotEqual(shipment1, shipment2)
+
+        self.assertTrue(shipment1 == shipment1_prime)
+        self.assertTrue(shipment1 != shipment2)
 
     def test_fetch(self):
         shipment = airbrite.Shipment.fetch(_id=self.SHIP1['_id'],

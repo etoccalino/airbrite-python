@@ -60,6 +60,90 @@ class DateAPIAttribute (APIAttribute):
 
 ###############################################################################
 
+class EntityCollection (list):
+    """Proxy to an underlying list and transform entities on the fly"""
+
+    def __init__(self, entity, values=[]):
+        self.entity = entity
+        self.reset(values)
+
+    def reset(self, values):
+        """Takes a list of entities to set the proxied collection"""
+        # Ensure it receives a list object
+        if type(values) is not list:
+            raise TypeError('must receive a list object')
+
+        # Ensure each object in the list is-a entity
+        if values and type(values[0]) is not dict:
+            raise TypeError('must receive a list of dict objects')
+
+        self.collection = values
+
+    def add(self, entity):
+        if not isinstance(entity, self.entity):
+            raise TypeError('must receive a %s object' % self.entity)
+        self.collection.append(entity.to_dict())
+
+    def remove(self, entity):
+        if not isinstance(entity, self.entity):
+            raise TypeError('must receive a %s object' % self.entity)
+        if not entity._id:
+            raise ValueError('%s object does not have an _id' % self.entity)
+        self.collection.remove(entity.to_dict())
+
+    def __len__(self):
+        return len(self.collection)
+
+    def __getitem__(self, index):
+        return self.entity(**self.collection.__getitem__(index))
+
+    def __setitem__(self, index, value):
+        if not isinstance(value, self.entity):
+            raise TypeError('must receive a %s object' % self.entity)
+        self.collection[index] = value.to_dict()
+
+    def __delitem__(self, index):
+        self.collection.__delitem__(index)
+
+    def __iter__(self):
+        for datum in self.collection:
+            yield self.entity(**datum)
+        raise StopIteration()
+
+
+class APICollectionAttribute (object):
+    """Describe a Entity objects collection backed by airbrite"""
+
+    def __init__(self, name, entity):
+        self.name = name
+        self.entity = entity
+
+    def __get__(self, instance, owner):
+        if self.name not in instance._data:
+            instance._data[self.name] = []
+        return EntityCollection(self.entity, instance._data[self.name])
+
+    def __set__(self, instance, values):
+        if isinstance(values, EntityCollection):
+            # Reset the values to those proxied by the collection
+            instance._data[self.name] = values.collection
+        else:
+
+            if isinstance(values, list):
+                # If pass a list of objects, get the list of data dicts
+                if values and isinstance(values[0], self.entity):
+                    values = [v.to_dict() for v in values]
+
+                # Set the list of values
+                instance._data[self.name] = values
+
+            # In any other case, error out
+            else:
+                raise TypeError('must receive a list of %s'
+                                ' or a EntityCollection' % self.entity)
+
+###############################################################################
+
 
 class Entity (object):
     """Base class for airbrite objects"""
@@ -93,6 +177,14 @@ class Entity (object):
 
     def to_dict(self):
         return self._data
+
+    def __eq__(self, other):
+        if self._id and hasattr(other, '_id'):
+            return self._id == other._id
+        return False
+
+    def __ne__(self, other):
+        return not self == other
 
     def __str__(self):
         return repr(self.to_dict())
@@ -244,43 +336,20 @@ class Order (Fetchable, Listable, Persistable, Entity):
 
     # Optional shipments connection (object)
     # TODO: make this attribute a nested entity collection
-    shipments = APIAttribute('shipments', default=[])
+    shipments = APICollectionAttribute('shipments', Shipment)
 
     class_url = 'orders'
 
     def __init__(self, **kwargs):
         shipments = kwargs.pop('shipments', [])
         super(Order, self).__init__(**kwargs)
-        for shipment in shipments:
-            self.add_shipment(shipment)
+        self.shipments = shipments
 
     def add_item(self, product, quantity=1):
         self.line_items.append({
             'sku': product.sku,
             'quantity': quantity,
         })
-
-    def add_shipment(self, shipment_data):
-        if type(shipment_data) is not dict:
-            raise TypeError('use to_dict() to pass a dict of values')
-        self.shipments.append(shipment_data)
-
-    def remove_shipment(self, shipment_data):
-        if type(shipment_data) is not dict:
-            raise TypeError('use to_dict() to pass a dict of values')
-
-        # Must have an _id to remove
-        if '_id' not in shipment_data or not shipment_data['_id']:
-            raise Exception('shipment does not have an ID')
-
-        if not 'shipments' in self._data:
-            self._data['shipments'] = []
-
-        # Remove by value of _id
-        shipments = self._data['shipments']
-        for data in shipments:
-            if data['_id'] == shipment_data['_id']:
-                shipments.delete(data)
 
     def __repr__(self):
         return "<Order (%s)>" % str(getattr(self, '_id', '?'))
