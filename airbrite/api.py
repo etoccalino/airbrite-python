@@ -94,6 +94,14 @@ class Entity (object):
     def to_dict(self):
         return self._data
 
+    def __eq__(self, other):
+        if self._id and hasattr(other, '_id'):
+            return self._id == other._id
+        return False
+
+    def __ne__(self, other):
+        return not self == other
+
     def __str__(self):
         return repr(self.to_dict())
 

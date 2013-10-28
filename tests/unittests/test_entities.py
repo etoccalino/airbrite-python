@@ -440,6 +440,17 @@ class ShipmentTestCase(unittest.TestCase):
         self.assertEqual(shipment1.order_id, self.SHIP1['order_id'])
         self.assertEqual(shipment2.order_id, self.SHIP1['order_id'])
 
+    def test_comparison(self):
+        shipment1 = airbrite.Shipment(**self.SHIP1)
+        shipment2 = airbrite.Shipment(**self.SHIP2)
+        shipment1_prime = airbrite.Shipment(**self.SHIP1)
+
+        self.assertEqual(shipment1, shipment1_prime)
+        self.assertNotEqual(shipment1, shipment2)
+
+        self.assertTrue(shipment1 == shipment1_prime)
+        self.assertTrue(shipment1 != shipment2)
+
     def test_fetch(self):
         shipment = airbrite.Shipment.fetch(_id=self.SHIP1['_id'],
                                            order_id=self.ORDER['_id'])
