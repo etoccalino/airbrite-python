@@ -172,6 +172,10 @@ class Entity (object):
     def __init__(self, **kwargs):
         self.replace(kwargs)
 
+    @property
+    def id(self):
+        return self._id
+
     def replace(self, data={}):
         self._data = data
 
