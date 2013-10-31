@@ -136,6 +136,8 @@ class CartTestCase (unittest.TestCase):
         payment = airbrite.Payment(amount=amount, card_token=card_token)
         order.payments.add(payment)
 
+        order.save()
+
         # Fetch it back, and see the products in the order
         _id = order._id
         del order

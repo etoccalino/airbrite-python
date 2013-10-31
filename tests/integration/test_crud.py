@@ -180,8 +180,13 @@ class CustomerCRUDTestCase (unittest.TestCase):
         self.assertIsInstance(customers_paging, dict)
 
     def test_get_customers_with_limit(self):
-        customers, customers_paging = airbrite.Customer.list(limit=3)
-        self.assertEqual(customers_paging['count'], 3)
+        # Create a customer
+        customer = airbrite.Customer(name='Test Customer', email='no@addr.com')
+        customer.save()
+        self.assertIsNotNone(customer._id)
+        # Retrieve just one customer
+        customers, customers_paging = airbrite.Customer.list(limit=1)
+        self.assertEqual(customers_paging['count'], 1)
 
     def test_create_and_retrieve_customer(self):
         name = 'Test Customer'
