@@ -173,6 +173,41 @@ for shipment in order.shipments:
 ```python
 order.shipments.remove(old_shipment)
 ```
+
+### Customers
+
+Can hold name, email and address data.
+
+#### Create
+
+```python
+customer = airbrite.Customer.create(...)
+
+# or
+
+customer = airbrite.Customer(...)
+customer.save()
+```
+
+#### Retrieve
+
+```python
+customer = airbrite.Customer.fetch(_id="foo")
+
+# or
+
+customer = airbrite.Customer(_id="foo")
+customer.refresh
+```
+
+#### Update
+
+```python
+customer = # ... obtain a customer
+customer.name = 'New Name'
+customer.save()
+```
+
 ### Helpers
 
 #### Persisted?

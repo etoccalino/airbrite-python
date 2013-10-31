@@ -314,46 +314,6 @@ class OrderTestCase(unittest.TestCase):
         self.assertEqual(len(order.line_items), 1)
         self.assertEqual(order.line_items[0]['sku'], 'some-sku')
 
-    def test_add_shipment_on_creation(self):
-        shipment = airbrite.Shipment(status='in_progress')
-        order = airbrite.Order(shipments=[shipment])
-        self.assertEqual(len(order.shipments), 1)
-
-    def test_add_shipment(self):
-        shipment = airbrite.Shipment(status='in_progress')
-        order = airbrite.Order()
-
-        self.assertEqual(len(order.shipments), 0)
-        order.shipments.add(shipment)
-        self.assertEqual(len(order.shipments), 1)
-        self.assertEqual(order.shipments[0].status, 'in_progress')
-
-    def test_add_shipments(self):
-        shipment1 = airbrite.Shipment(status='in_progress')
-        shipment2 = airbrite.Shipment(status='halted')
-        order = airbrite.Order()
-        self.assertEqual(len(order.shipments), 0)
-        order.shipments.add(shipment1)
-        order.shipments.add(shipment2)
-        self.assertEqual(len(order.shipments), 2)
-        all_status = [s.status for s in order.shipments]
-        self.assertTrue('in_progress' in all_status)
-
-    def test_remove_shipment(self):
-        shipment1 = airbrite.Shipment(_id='123', status='in_progress')
-        shipment2 = airbrite.Shipment(status='pending')
-        order = airbrite.Order(shipments=[shipment1, shipment2])
-        self.assertIsInstance(order.shipments, airbrite.api.EntityCollection)
-        self.assertEqual(len(order.shipments), 2)
-
-        # shipment1 does not have an ID yet
-        self.assertRaises(Exception, order.shipments.remove, shipment2)
-
-        # Replace collection, instead of removing a single entry
-        order.shipments.remove(shipment1)
-        self.assertEqual(len(order.shipments), 1)
-        self.assertEqual(shipment2.status, order.shipments[0].status)
-
 
 class ListOrderTestCase(unittest.TestCase):
 
@@ -546,31 +506,6 @@ class PaymentTestCase(unittest.TestCase):
         self.assertIsInstance(payment, airbrite.Payment)
         self.assertEqual(payment._id, self.PAY['_id'])
         self.assertEqual(payment.order_id, self.PAY['order_id'])
-
-    def test_add_to_order(self):
-        del self.PAY['order_id']
-        order = airbrite.Order(**self.ORDER)
-        payment = airbrite.Payment(**self.PAY)
-
-        self.assertEqual(len(order.payments), 0)
-        order.payments.add(payment)
-        self.assertEqual(len(order.payments), 1)
-
-    def test_remove_to_order(self):
-        del self.PAY['order_id']
-        order = airbrite.Order(**self.ORDER)
-        payment = airbrite.Payment(**self.PAY)
-
-        self.assertEqual(len(order.payments), 0)
-        order.payments.add(payment)
-        self.assertEqual(len(order.payments), 1)
-
-        del payment
-        payment = airbrite.Payment(**self.PAY)
-
-        self.assertEqual(len(order.payments), 1)
-        order.payments.remove(payment)
-        self.assertEqual(len(order.payments), 0)
 
 
 class CustomerTestCase(unittest.TestCase):
