@@ -49,10 +49,6 @@ class CartTestCase (unittest.TestCase):
         order.add_item(product2, 1)
         self.assertEqual(len(order.line_items), 2)
 
-        # Add customer data to the order
-
-        # Add payment data
-
         # Create the order in the backend
         order.save()
         self.assertIsNotNone(order._id)
@@ -100,10 +96,6 @@ class CartTestCase (unittest.TestCase):
         shipment = airbrite.Shipment(metadata={'note': 'stubbed shipment'})
         order.shipments.add(shipment)
 
-        # Add customer data to the order
-
-        # Add payment data
-
         # Create the order in the backend
         order.save()
         self.assertIsNotNone(order._id)
@@ -144,10 +136,6 @@ class CartTestCase (unittest.TestCase):
         payment = airbrite.Payment(amount=amount, card_token=card_token)
         order.payments.add(payment)
 
-        # Create the order in the backend
-        order.save()
-        self.assertIsNotNone(order._id)
-
         # Fetch it back, and see the products in the order
         _id = order._id
         del order
@@ -160,3 +148,52 @@ class CartTestCase (unittest.TestCase):
         # Check the payment data
         self.assertEqual(len(order.payments), 1)
         self.assertEqual(order.payments[0].amount, amount)
+
+    def test_customer_cart(self):
+        DATA = {
+            'product': {
+                'name': 'Product One',
+                'sku': str(uuid.uuid4()),
+                'price': 50,
+            },
+            'customer': {
+                'name': 'Joe Doe',
+                'email': 'no@addr.com',
+            }
+        }
+
+        # Create a product
+        product = airbrite.Product.create(**DATA['product'])
+        self.assertIsNotNone(product._id)
+
+        # Create an order, WITHOUT saving it to the backend
+        order = airbrite.Order()
+
+        # Add 2 of product, and 1 of product2
+        order.add_item(product, 2)
+        self.assertEqual(len(order.line_items), 1)
+
+        # Create the customer and associate with order
+        customer = airbrite.Customer.create(**DATA['customer'])
+        self.assertIsNotNone(customer._id)
+        order.customer_id = customer._id
+
+        # Create the order in the backend
+        order.save()
+        self.assertIsNotNone(order._id)
+        self.assertEqual(order.customer_id, customer._id)
+
+        # Fetch it back, and see the products in the order
+        _id = order._id
+        del order
+        order = airbrite.Order.fetch(_id=_id)
+
+        # Check that the product order is good
+        self.assertEqual(len(order.line_items), 1)
+        self.assertEqual(product.sku, order.line_items[0]['sku'])
+
+        self.assertEqual(len(order.line_items), 1)
+        SKUs = [p['sku'] for p in order.line_items]
+        self.assertTrue(product.sku in SKUs)
+
+        self.assertEqual(order.customer_id, customer._id)
