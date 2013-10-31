@@ -3,7 +3,7 @@ import json
 import api
 
 # Re-export API entities
-from api import Product, Order, Shipment, Payment
+from api import Product, Order, Shipment, Payment, Customer
 
 
 import logging
@@ -12,15 +12,16 @@ logger = logging.getLogger('airbrite')
 
 def _get(resource):
     logger.debug('REST API call - _get(%s)' % resource)
-    return requests.get(END_POINT + resource, auth=(API_KEY, API_KEY_PASSWORD))
+    return requests.get(api.END_POINT + resource,
+                        auth=(api.KEY, api.KEY_PASSWORD))
 
 
 def _post(resource, data={}):
-    url = END_POINT + resource
+    url = api.END_POINT + resource
     headers = {'content-type': 'application/json'}
     payload = json.dumps(data)
     logger.debug('REST API call - _post(%s)' % resource)
-    return requests.post(url, auth=(API_KEY, API_KEY_PASSWORD),
+    return requests.post(url, auth=(api.KEY, api.KEY_PASSWORD),
                          headers=headers, data=payload)
 
 

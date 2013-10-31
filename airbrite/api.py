@@ -31,9 +31,6 @@ class APIAttribute (object):
         return instance._data[self.name]
 
     def __set__(self, instance, value):
-        if self.name not in instance._data:
-            raise AttributeError('%s has no API attribute "%s"'
-                                 % (instance, self.name))
         instance._data[self.name] = value
 
 
@@ -345,6 +342,31 @@ class Payment (EntityInOrder):
     # billing_address = APIAttribute('billing_address', default={})
 
     class_url = 'orders/%(order_id)s/payments'
+
+
+class Customer (Fetchable, Listable, Persistable, Entity):
+
+    user_id = APIAttribute('user_id')
+    name = APIAttribute('name')
+    email = APIAttribute('email')
+    address = APIAttribute('address', default={})
+    addresses = APIAttribute('addresses', default=[])
+
+    # Contains name, line1, line2, city, state, zip, country, phone
+    default_address = APIAttribute('default_address', default={})
+
+    card_token = APIAttribute('card_token')
+    stripe = APIAttribute('stripe')
+    stripe_customer_id = APIAttribute('stripe_customer_id')
+    match = APIAttribute('match')
+
+    class_url = 'customers'
+
+    def replace(self, data):
+        super(Customer, self).replace(data)
+        stripe_data = data.get('stripe', {})
+        if 'customer_id' in stripe_data:
+            self.stripe_customer_id = stripe_data['customer_id']
 
 
 class Order (Fetchable, Listable, Persistable, Entity):

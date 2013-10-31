@@ -164,3 +164,61 @@ class OrderCRUDTestCase (unittest.TestCase):
         del order
         order = airbrite.Order.fetch(_id=_id)
         self.assertEqual(order.line_items[0]['quantity'], new_quantity)
+
+
+class CustomerCRUDTestCase (unittest.TestCase):
+
+    def test_backend_connection(self):
+        """Tests the simplest call that should succeed"""
+        self.c = airbrite.client.Client()
+        result = self.c.get(airbrite.Customer.collection_url())
+        self.assertIsInstance(result, dict)
+
+    def test_get_customers(self):
+        customers, customers_paging = airbrite.Customer.list()
+        self.assertIsInstance(customers, list)
+        self.assertIsInstance(customers_paging, dict)
+
+    def test_get_customers_with_limit(self):
+        # Create a customer
+        customer = airbrite.Customer(name='Test Customer', email='no@addr.com')
+        customer.save()
+        self.assertIsNotNone(customer._id)
+        # Retrieve just one customer
+        customers, customers_paging = airbrite.Customer.list(limit=1)
+        self.assertEqual(customers_paging['count'], 1)
+
+    def test_create_and_retrieve_customer(self):
+        name = 'Test Customer'
+        email = 'no@addr.com'
+
+        # Create the customer
+        customer = airbrite.Customer(name=name, email=email)
+        customer.save()
+        self.assertIsNotNone(customer._id)
+        self.assertNotEqual(customer._id, '')
+        self.assertEqual(customer.name, name)
+        self.assertEqual(customer.email, email)
+
+        # Fetch it back
+        same_customer = airbrite.Customer.fetch(_id=customer._id)
+        self.assertEqual(same_customer.name, name)
+        self.assertEqual(same_customer.email, email)
+
+        # Make sure it's in the list
+        is_there, has_more = False, True
+        offset, limit = 0, 100
+        while not is_there and has_more:
+            # Get the next page
+            customers, paging = airbrite.Customer.list(limit=limit,
+                                                       offset=offset)
+            # Update the params
+            has_more = paging.get('has_more', False)
+            if has_more:
+                offset, limit = paging['offset'], paging['limit']
+            # Search for the order in this page
+            for customer in customers:
+                if customer._id == same_customer._id:
+                    is_there = True
+                    break
+        self.assertTrue(is_there)
