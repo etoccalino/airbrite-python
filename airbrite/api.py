@@ -107,6 +107,12 @@ class EntityCollection (list):
             yield self.entity(**datum)
         raise StopIteration()
 
+    def __srt__(self):
+        return self.collection.__str__()
+
+    def __repr__(self):
+        return self.collection.__repr__()
+
 
 class APICollectionAttribute (object):
     """Describe a Entity objects collection backed by airbrite"""
