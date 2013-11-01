@@ -30,6 +30,23 @@ To run the integration tests (which use the network, and take longer than units)
 
     $ nosetests tests/integration
 
+## Quickstart
+
+Get a feeling of the bindings with a quick tour using the python repl:
+
+    $ python setup.py install
+    $ # ...
+    $ python
+    >>> import airbrite
+    >>> products, paging = airbrite.Product.list(limit=5)
+    >>> products
+        [<Product (5272a4c833bb650600000060)>, <Product (5272a4ae9b29130400000202)>, <Product (5272a4ad2ca30b04000000cb)>, <Product (5272a4aa43e58b07000000b5)>, <Product (5272a4a84ab33f060000023d)>]
+    >>> paging['total']
+    207
+    >>>
+
+*NOTE: IDs and numbers surely won't be the same for you. That's not a problem.*
+
 ## Usage
 
 ### Getting Started
