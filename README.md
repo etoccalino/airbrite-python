@@ -34,6 +34,9 @@ To run the integration tests (which use the network, and take longer than units)
 
 Get a feeling of the bindings with a quick tour using the python repl:
 
+    $ virtualenv quicktour
+    $ source quicktour/bin/activate
+    $ pip install -r REQUIREMENTS
     $ python setup.py install
     $ # ...
     $ python
@@ -61,6 +64,8 @@ Get a feeling of the bindings with a quick tour using the python repl:
     [{u'sku': u'7bafb41d-aa48-4698-a42a-0a8dd6dea94c', u'updated_date': u'2013-11-01T13:52:10.671Z', u'updated': 1383313930, u'name': u'Test Product', u'price': 150, u'quantity': 3, u'metadata': {}}]
     >>> order.shipments
     [{u'updated_date': u'2013-11-01T14:42:34.295Z', u'updated': 1383316954, u'user_id': u'5237a347429acf0400000013', u'created': 1383316954, u'order_id': u'5273bdda7dabcd0800000054', u'created_date': u'2013-11-01T14:42:34.295Z', u'shipping_address': {u'phone': u'555 0111', u'name': u'Joe Doe'}, u'_id': u'5273bdda7dabcd0800000055', u'metadata': {}}]
+    >>> exit()
+    $ deactivate
 
 *NOTE: IDs and data surely won't be the same for you.*
 
