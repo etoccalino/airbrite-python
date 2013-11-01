@@ -40,10 +40,25 @@ Get a feeling of the bindings with a quick tour using the python repl:
     >>> import airbrite
     >>> products, paging = airbrite.Product.list(limit=5)
     >>> products
-        [<Product (5272a4c833bb650600000060)>, <Product (5272a4ae9b29130400000202)>, <Product (5272a4ad2ca30b04000000cb)>, <Product (5272a4aa43e58b07000000b5)>, <Product (5272a4a84ab33f060000023d)>]
+    [<Product (5272a4c833bb650600000060)>, <Product (5272a4ae9b29130400000202)>, <Product (5272a4ad2ca30b04000000cb)>, <Product (5272a4aa43e58b07000000b5)>, <Product (5272a4a84ab33f060000023d)>]
     >>> paging['total']
     207
-    >>>
+    >>> shipping = airbrite.Shipment(shipping_address={
+    ... "name": "Joe Doe",
+    ... "phone": "555 0111",
+    ... })
+    >>> order = airbrite.Order()
+    >>> order.add_item(products[0], quantity=3)
+    >>> order.shipments.add(shipping)
+    >>> order.save()
+    >>> order._id
+    >>> exit()
+    $ # let's bring it back
+    $ python
+    >>> import airbrite
+    >>> order = airbrite.Order.fetch(_id='5273b4089742b00800000052')
+    >>> order.line_items
+    [{u'sku': u'7bafb41d-aa48-4698-a42a-0a8dd6dea94c', u'updated_date': u'2013-11-01T13:52:10.671Z', u'updated': 1383313930, u'name': u'Test Product', u'price': 150, u'quantity': 3, u'metadata': {}}]
 
 *NOTE: IDs and numbers surely won't be the same for you. That's not a problem.*
 
