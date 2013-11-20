@@ -377,6 +377,7 @@ class Customer (Fetchable, Listable, Persistable, Entity):
 
 class Order (Fetchable, Listable, Persistable, Entity):
 
+    customer = APIAttribute('customer', default={})
     customer_id = APIAttribute('customer_id')
     currency = APIAttribute('currency')  # 3-letter ISO currency code
     order_number = APIAttribute('order_number', default=-1)
@@ -408,8 +409,10 @@ class Order (Fetchable, Listable, Persistable, Entity):
 
     def __init__(self, **kwargs):
         shipments = kwargs.pop('shipments', [])
+        payments = kwargs.pop('payments', [])
         super(Order, self).__init__(**kwargs)
         self.shipments = shipments
+        self.payments = payments
 
     def add_item(self, product, quantity=1):
         self.line_items.append({

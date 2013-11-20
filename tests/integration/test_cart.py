@@ -199,3 +199,35 @@ class CartTestCase (unittest.TestCase):
         self.assertTrue(product.sku in SKUs)
 
         self.assertEqual(order.customer_id, customer._id)
+
+
+class ShowcaseTestCase (unittest.TestCase):
+
+    def test_showcase(self):
+        airbrite.api.KEY = "sk_test_YzY1YTQ2YmQtNGNlZi00YmM0LTg4ZmMtZDMwYTdlOWIwMTg5"
+
+        order = airbrite.Order.create(
+            customer={
+                'name': "Tiger",
+                'email': "tiger@airbrite.io"
+            },
+            line_items=[{
+                'sku': "airbrite-gold",
+                'quantity': 1
+            }],
+            shipping_address={
+                'line1': "12345 Sunset Blvd.",
+                'line2': "Apt #420",
+                'city': "Beverly Hills",
+                'state': "CA",
+                'zip': "90210",
+                'country': 'US'
+            },
+            payments=[{
+                'gateway': "stripe",
+                'currenty': "usd",
+                'token': "tok_2tQ28TAByCeqH9",
+                'amount': 1337
+            }])
+        self.assertIsNotNone(order._id)
+        order.save()
