@@ -24,12 +24,12 @@ class Client(object):
     def auth(self):
         return (api.KEY, api.KEY_PASSWORD)
 
-    def meth(self, method, url, **params):
+    def meth(self, method, url, expected=200, **params):
         logger.debug('calling %s on %s with %s' % (method, url, params))
         req = getattr(requests, method)(url, auth=self.auth,
                                         headers=self.headers,
                                         **params)
-        if req.status_code != 200:
+        if req.status_code != expected:
             logger.warning('%s() call failed with status code %s, response: %s'
                            % (method, req.status_code, req.json()))
             raise Exception('Bad get parameters: %s' % params)
@@ -39,7 +39,7 @@ class Client(object):
         return self.meth('get', url, params=params)
 
     def post(self, url, **params):
-        return self.meth('post', url, data=json.dumps(params))
+        return self.meth('post', url, expected=201, data=json.dumps(params))
 
     def put(self, url, **params):
         return self.meth('put', url, data=json.dumps(params))
